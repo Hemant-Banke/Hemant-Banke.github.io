@@ -1,0 +1,181 @@
+/* ============================================================================
+   Home / hero
+   ========================================================================== */
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  /* fill the viewport below the sticky nav (3.25rem tall) */
+  min-height: calc(100svh - 3.25rem);
+  display: flex;
+  align-items: center;
+  isolation: isolate;
+}
+/* Readability scrim: sits above the simulation, below the content. Darkens the
+   left/centre (where the text column lives) so the neon type keeps its contrast,
+   while letting the organisms stay visible toward the right edge. */
+/* .hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(10, 13, 12, 0.5) 0%,
+    rgba(10, 13, 12, 0.3) 42%,
+    rgba(10, 13, 12, 0.1) 72%,
+    rgba(10, 13, 12, 0.0) 100%
+  );
+} */
+.lenia-field {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.62;
+  mask-image: radial-gradient(135% 105% at 50% 45%, #000 42%, transparent 100%);
+  -webkit-mask-image: radial-gradient(135% 105% at 50% 45%, #000 42%, transparent 100%);
+  /* a brief fade so the noisy first frame doesn't pop, but short enough that
+     you still watch the emergence from the very beginning */
+  animation: field-in 0.5s ease-out both;
+}
+@keyframes field-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.62;
+  }
+}
+.hero-inner {
+  position: relative;
+  z-index: 2; /* above the readability scrim (.hero::before) */
+  width: 100%;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+.hero-inner .eyebrow {
+  margin: 0 0 0.6rem;
+}
+.wordmark-wrap {
+  width: 100%;
+  max-width: 62rem;
+}
+.wordmark {
+  margin: 0;
+  color: var(--green);
+  font-weight: 700;
+  line-height: 1.04;
+  white-space: pre;
+  text-shadow: 0 0 16px rgba(69, 240, 138, 0.4);
+}
+.hero-role {
+  margin: 1rem 0 0.3rem;
+  font-size: clamp(0.95rem, 2vw, 1.15rem);
+  letter-spacing: 0.04em;
+}
+.hero-tagline {
+  margin: 0 0 1.4rem;
+  max-width: 56ch;
+  color: var(--ink);
+}
+.hero-typed {
+  min-height: 4.6rem;
+  margin-bottom: 1.4rem;
+  color: var(--dim);
+}
+.typed-line {
+  white-space: pre-wrap;
+}
+/* Readability: a stacked dark text-shadow halo keeps the role + tagline legible
+   over the colourful field. The ASCII wordmark keeps its own green glow. */
+.hero-role,
+.hero-tagline {
+  text-shadow:
+    0 0 4px var(--bg),
+    0 0 4px var(--bg),
+    0 0 8px var(--bg),
+    0 1px 3px var(--bg);
+}
+/* `$ whoami` prompt: green sigil, black word. */
+.hero-inner .eyebrow {
+  color: #000;
+}
+.hero-inner .eyebrow .eyebrow-prompt {
+  color: var(--green);
+}
+.hero-cta {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.6rem;
+}
+/* Social links sit on an opaque background chip (no shadow) that reacts to
+   hover / click. */
+.hero-inner .socials a {
+  background: var(--bg);
+  padding: 0.06em 0.4em;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.hero-inner .socials a:hover {
+  background: var(--bg-2);
+}
+.hero-inner .socials a:hover .socials-label {
+  color: var(--ink-strong);
+}
+.hero-inner .socials a:active {
+  background: var(--line);
+}
+
+/* recent notes block on home */
+.home-recent {
+  padding: clamp(2.5rem, 6vw, 4.5rem) var(--gutter);
+}
+.home-recent-all {
+  margin-left: auto;
+  align-self: center;
+}
+.home-recent-all:hover {
+  color: var(--green);
+}
+.recent-list {
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+.recent-item {
+  background: var(--bg-1);
+  padding: 1rem 1.2rem;
+  transition: background 0.14s ease;
+}
+.recent-item:hover {
+  background: var(--bg-2);
+}
+.recent-link {
+  border: none;
+  color: var(--ink);
+  display: flex;
+  align-items: baseline;
+  gap: 0.8ch;
+  flex-wrap: wrap;
+}
+.recent-link:hover {
+  border: none;
+}
+.recent-title {
+  color: var(--ink-strong);
+  font-weight: 500;
+}
+.recent-link:hover .recent-title {
+  color: var(--green);
+}
+.recent-date {
+  margin-left: auto;
+  font-size: 0.82rem;
+}
+.recent-summary {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+  max-width: var(--measure);
+}

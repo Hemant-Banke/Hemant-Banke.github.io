@@ -1,0 +1,266 @@
+/* ============================================================================
+   ASCII portfolio — design tokens & base styles
+   Terminal aesthetic: deep green-black canvas, phosphor ink, three disciplined
+   accents (green / cyan / magenta) plus amber for "broken" states.
+   ========================================================================== */
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-500.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/fonts/jetbrains-mono-700.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  /* canvas */
+  --bg: #0a0d0c;
+  --bg-1: #0e1312;
+  --bg-2: #141b19;
+  --line: #21302c;
+  --line-soft: #182220;
+
+  /* ink */
+  --ink: #cdd8d2;
+  --ink-strong: #eaf3ee;
+  --dim: #6b7a74;
+  --dimmer: #46534e;
+
+  /* accents */
+  --green: #45f08a;
+  --cyan: #43d1e6;
+  --magenta: #ff6ad5;
+  --amber: #ffc061;
+  --violet: #8b7cff;
+
+  --accent: var(--green);
+  --accent-dim: #2a7d54;
+
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Menlo", "Cascadia Code",
+    "Roboto Mono", monospace;
+
+  --measure: 68ch;
+  --gutter: clamp(1.25rem, 4vw, 3rem);
+  --radius: 0; /* terminals don't round corners */
+
+  --glow: 0 0 1px currentColor, 0 0 10px rgba(69, 240, 138, 0.18);
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* never allow a sideways scroll from an over-wide child */
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: clamp(14px, 0.55vw + 12px, 16px);
+  line-height: 1.6;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  min-height: 100dvh;
+  overflow-x: clip;
+  /* long unbroken tokens (urls, emails, slugs) wrap instead of overflowing */
+  overflow-wrap: break-word;
+  word-break: break-word;
+  /* faint scanline weave — reads as CRT without shouting */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(69, 240, 138, 0.014) 0px,
+      rgba(69, 240, 138, 0.014) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(120% 80% at 50% -10%, rgba(67, 209, 230, 0.05), transparent 60%);
+  background-attachment: fixed;
+}
+
+a {
+  color: var(--cyan);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+a:hover {
+  color: var(--ink-strong);
+  border-bottom-color: currentColor;
+}
+
+::selection {
+  background: rgba(69, 240, 138, 0.28);
+  color: var(--ink-strong);
+}
+
+:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--ink-strong);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  margin: 0 0 0.6em;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 2rem 0;
+}
+
+code,
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+/* ---- shared ascii bits -------------------------------------------------- */
+
+.prompt::before {
+  content: "> ";
+  color: var(--green);
+}
+
+.eyebrow {
+  color: var(--dim);
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.accent-green {
+  color: var(--green);
+}
+.accent-cyan {
+  color: var(--cyan);
+}
+.accent-magenta {
+  color: var(--magenta);
+}
+.accent-amber {
+  color: var(--amber);
+}
+
+.blink {
+  animation: blink 1.1s steps(1) infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* box-drawing "window" frame used across the site */
+.box {
+  border: 1px solid var(--line);
+  background: linear-gradient(var(--bg-1), var(--bg));
+  position: relative;
+}
+.box > .box-title {
+  position: absolute;
+  top: -0.72em;
+  left: 1rem;
+  padding: 0 0.5rem;
+  background: var(--bg);
+  color: var(--dim);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+}
+
+/* generic button / chip */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5ch;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--line);
+  background: var(--bg-1);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.btn:hover {
+  border-color: var(--green);
+  color: var(--ink-strong);
+  box-shadow: inset 0 0 0 1px rgba(69, 240, 138, 0.25);
+}
+.btn[aria-pressed="true"] {
+  border-color: var(--green);
+  color: var(--bg);
+  background: var(--green);
+}
+/* compact square icon-only button */
+.btn-icon {
+  padding: 0.5rem 0.75rem;
+  justify-content: center;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.tag {
+  color: var(--dim);
+  border: 1px solid var(--line-soft);
+  padding: 0 0.5ch;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.layout {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* skip flicker/anim when the visitor asks for calm */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

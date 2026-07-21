@@ -1,0 +1,558 @@
+/* ============================================================================
+   Garden: toolbar, graph, explorer, note, resume, 404
+   ========================================================================== */
+
+.garden-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.view-toggle {
+  display: flex;
+  gap: 0.4rem;
+}
+.garden-stats {
+  font-size: 0.85rem;
+}
+
+.graph-legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2ch;
+  padding: 0;
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+}
+.legend-item {
+  color: var(--ink);
+}
+
+/* ---- graph canvas ---- */
+.graph-box,
+.note-graph-box {
+  padding: 0.6rem;
+  margin-top: 0.4rem;
+}
+.graph-wrap {
+  position: relative;
+  width: 100%;
+}
+.graph-canvas {
+  display: block;
+  width: 100%;
+  background:
+    radial-gradient(80% 60% at 50% 40%, rgba(67, 209, 230, 0.05), transparent 70%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(69, 240, 138, 0.02) 0,
+      rgba(69, 240, 138, 0.02) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  touch-action: none;
+}
+.graph-hint {
+  position: absolute;
+  left: 0.9rem;
+  bottom: 0.7rem;
+  font-size: 0.76rem;
+  pointer-events: none;
+  letter-spacing: 0.04em;
+}
+.graph-tip {
+  position: absolute;
+  right: 0.9rem;
+  top: 0.7rem;
+  padding: 0.15rem 0.7ch;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink-strong);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+/* ---- explorer ---- */
+.explorer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 1.2rem;
+  align-items: start;
+}
+.filetree,
+.note-list-box {
+  padding: 1.2rem 1rem 1rem;
+}
+.filetree-root {
+  margin-bottom: 0.2rem;
+  font-weight: 500;
+}
+.filetree-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.filetree-row {
+  display: flex;
+  align-items: baseline;
+  white-space: pre;
+  cursor: pointer;
+  padding: 0.05rem 0.3rem;
+  color: var(--ink);
+  border-left: 2px solid transparent;
+}
+.filetree-row:hover {
+  background: var(--bg-2);
+}
+.filetree-row.active {
+  background: var(--bg-2);
+  border-left-color: var(--green);
+}
+.filetree-row.group .filetree-name {
+  color: var(--ink-strong);
+}
+.filetree-prefix {
+  color: var(--dimmer);
+}
+.filetree-glyph {
+  margin-right: 0.6ch;
+}
+.filetree-name {
+  white-space: normal;
+}
+.filetree-count {
+  font-size: 0.78rem;
+}
+
+.note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.note-list-link {
+  border: none;
+  color: var(--ink-strong);
+}
+.note-list-link:hover {
+  border: none;
+  color: var(--green);
+}
+.note-list-title::before {
+  content: "● ";
+  color: var(--cyan);
+}
+.note-list-summary {
+  margin: 0.2rem 0 0;
+  font-size: 0.88rem;
+  max-width: var(--measure);
+}
+
+/* ---- note page ---- */
+.note-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: 2rem;
+  align-items: start;
+}
+.note-breadcrumb {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+.note-breadcrumb a {
+  border: none;
+  color: var(--dim);
+}
+.note-breadcrumb a:hover {
+  color: var(--green);
+}
+.note-title {
+  font-size: clamp(1.6rem, 4vw, 2.3rem);
+  margin-bottom: 0.4rem;
+}
+.note-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8ch;
+  align-items: baseline;
+  font-size: 0.85rem;
+  margin-bottom: 1.6rem;
+}
+.note-aside {
+  position: sticky;
+  top: 4.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+.note-links-box {
+  padding: 1.2rem 1rem 1rem;
+}
+.note-links-cols {
+  display: grid;
+  gap: 1rem;
+}
+.note-links-h {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.4rem;
+}
+.note-links-box .mono-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.note-links-box a {
+  border: none;
+  color: var(--ink);
+}
+.note-links-box a:hover {
+  color: var(--green);
+  border: none;
+}
+
+/* ---- rendered markdown ---- */
+.note-body {
+  max-width: var(--measure);
+  line-height: 1.72;
+}
+.note-body h1,
+.note-body h2,
+.note-body h3 {
+  margin-top: 2.2rem;
+}
+.note-body h2::before {
+  content: "## ";
+  color: var(--green);
+}
+.note-body h3::before {
+  content: "### ";
+  color: var(--cyan);
+}
+.note-body p {
+  margin: 1rem 0;
+}
+.note-body a:not(.wikilink) {
+  color: var(--cyan);
+}
+.note-body ul,
+.note-body ol {
+  padding-left: 1.5rem;
+}
+.note-body li {
+  margin: 0.3rem 0;
+}
+.note-body ul li::marker {
+  content: "▪ ";
+  color: var(--green);
+}
+.note-body blockquote {
+  margin: 1.4rem 0;
+  padding: 0.4rem 1.2rem;
+  border-left: 2px solid var(--magenta);
+  color: var(--ink-strong);
+  background: var(--bg-1);
+  font-style: italic;
+}
+.note-body code {
+  background: var(--bg-2);
+  border: 1px solid var(--line-soft);
+  padding: 0.05rem 0.5ch;
+  color: var(--amber);
+}
+.note-body pre {
+  background: var(--bg-1);
+  border: 1px solid var(--line);
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  line-height: 1.5;
+}
+.note-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--ink);
+}
+.note-body hr {
+  border-top: 1px dashed var(--line);
+}
+.wikilink {
+  color: var(--magenta);
+  border-bottom: 1px dotted currentColor;
+  cursor: pointer;
+}
+.wikilink:hover {
+  color: var(--ink-strong);
+}
+.wikilink.broken {
+  color: var(--amber);
+  border-bottom-style: dashed;
+  opacity: 0.8;
+  cursor: help;
+}
+
+/* ---- resume ---- */
+.resume-sheet {
+  padding: 2rem 1.6rem 1.8rem;
+  max-width: 60rem;
+}
+.resume-download {
+  margin-left: auto;
+  align-self: center;
+}
+.resume-summary {
+  color: var(--ink);
+  max-width: var(--measure);
+  margin: 0 0 1.6rem;
+}
+.resume-section-title {
+  font-size: 1.05rem;
+  margin: 1.8rem 0 0.9rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.4rem;
+}
+.resume-entry {
+  margin-bottom: 1.3rem;
+}
+.resume-entry-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4ch;
+}
+.resume-role {
+  font-weight: 700;
+}
+.resume-period {
+  margin-left: auto;
+  font-size: 0.85rem;
+}
+.resume-loc {
+  margin: 0.1rem 0 0.4rem;
+  font-size: 0.85rem;
+}
+.resume-points {
+  list-style: none;
+  padding: 0;
+  margin: 0.4rem 0 0;
+}
+.resume-points li {
+  margin: 0.2rem 0;
+}
+.resume-skill-row {
+  margin: 0.3rem 0;
+}
+.resume-skill-group {
+  font-weight: 700;
+}
+
+/* ---- resume: header actions ---- */
+.resume-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ---- full-screen PDF reader ---- */
+.pdffs {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: pdffs-in 0.18s ease-out both;
+}
+/* ASCII plasma filling the letterbox space behind the bar + document */
+.ascii-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.32;
+  pointer-events: none;
+  mask-image: radial-gradient(120% 120% at 50% 40%, transparent 30%, #000 100%);
+  -webkit-mask-image: radial-gradient(120% 120% at 50% 40%, transparent 30%, #000 100%);
+  animation: pdffs-in 0.6s ease-out both;
+}
+@keyframes pdffs-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.pdffs-bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.6rem clamp(0.8rem, 3vw, 2rem);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 84%, transparent);
+  backdrop-filter: blur(8px);
+  flex-wrap: nowrap; /* keep the whole bar on one line */
+}
+.pdffs-title {
+  flex: 1 1 auto;
+  font-size: 0.9rem;
+  color: var(--ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pdffs-pageinfo {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.pdffs-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+/* on narrow screens, collapse action labels to their icons so the bar never
+   wraps onto a second line */
+@media (max-width: 600px) {
+  .pdffs-bar {
+    gap: 0.5rem;
+    padding: 0.5rem 0.7rem;
+  }
+  .pdffs-actions {
+    gap: 0.3rem;
+  }
+  .pdf-btn {
+    padding: 0.25rem 0.55rem;
+  }
+  .pdffs-fname {
+    display: none;
+  }
+  .btn-label {
+    display: none;
+  }
+}
+.pdffs-close {
+  border-color: var(--magenta);
+  color: var(--magenta);
+}
+.pdffs-close:hover {
+  background: var(--magenta);
+  color: var(--bg);
+  box-shadow: none;
+}
+
+.pdffs-scroll {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  overflow: auto; /* both axes: zoomed pages scroll horizontally too */
+  padding: clamp(1rem, 4vw, 3rem);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.pdffs-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  /* fill the viewport when the page is small (so it centres), but grow past it
+     when zoomed in (so it scrolls instead of squishing) */
+  min-width: min-content;
+}
+
+.pdf-btn {
+  padding: 0.25rem 0.7rem;
+}
+.pdf-scale {
+  min-width: 4ch;
+  text-align: center;
+  color: var(--ink);
+}
+.pdf-page {
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 44px rgba(0, 0, 0, 0.62);
+  background: #fff;
+  display: block;
+}
+.pdf-status {
+  position: relative;
+  z-index: 1;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+.pdf-status code {
+  color: var(--amber);
+}
+
+@media (max-width: 900px) {
+  .resume-arcade {
+    grid-template-columns: 1fr;
+  }
+  .atari-rail {
+    display: none;
+  }
+}
+
+/* ---- research ---- */
+.research-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+.research-item {
+  display: flex;
+  gap: 1.2rem;
+  background: var(--bg-1);
+  padding: 1.4rem;
+}
+.research-index {
+  font-weight: 700;
+  white-space: nowrap;
+}
+.research-title {
+  font-size: 1.1rem;
+  margin: 0 0 0.3rem;
+}
+.research-meta {
+  margin: 0 0 0.6rem;
+  font-size: 0.85rem;
+}
+.research-abstract {
+  margin: 0 0 0.7rem;
+  max-width: var(--measure);
+  color: var(--ink);
+}
+
+/* ---- 404 ---- */
+.notfound-art {
+  font-size: clamp(0.7rem, 2.4vw, 1.1rem);
+  line-height: 1.05;
+  text-shadow: 0 0 12px rgba(255, 106, 213, 0.35);
+  margin: 2rem 0;
+}
+
+/* ---- responsive ---- */
+@media (max-width: 900px) {
+  .note-page {
+    grid-template-columns: 1fr;
+  }
+  .note-aside {
+    position: static;
+  }
+  .explorer-grid {
+    grid-template-columns: 1fr;
+  }
+}
