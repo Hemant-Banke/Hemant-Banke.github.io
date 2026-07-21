@@ -13,13 +13,14 @@ const F = 0.018; // feed rate
 const K = 0.051; // kill rate
 const DU = 0.16; // U diffusion
 const DV = 0.08; // V diffusion
-const SUBSTEPS = 12; // reaction iterations per rendered frame (evolution speed)
-const FRAME_MS = 45; // ~22fps render cadence
+const SUBSTEPS = 10; // reaction iterations per rendered frame (evolution speed)
+const FRAME_MS = 80; // ~12fps render cadence — it's an ambient backdrop
+const FUR_FLOOR = 0.05; // skip near-empty cells so we don't fillText the whole grid
 
 // Density ramp with no blanks: the low-density "fur" is a fine speckle and the
 // reaction-diffusion spots pack into dense glyphs — a cheetah pelt.
 const RAMP = ".·:-=+*oO#@";
-const FONT_PX = 15;
+const FONT_PX = 19; // larger glyphs ⇒ far fewer cells drawn per frame
 
 // Cheetah palette — golden-tan fur (low density) shading through amber into
 // dark-brown spot cores (dense). Each Gray-Scott spot renders as a tan-rimmed
@@ -145,6 +146,7 @@ export default function AsciiField({ className = "ascii-field" }: { className?: 
         for (let x = 0; x < cols; x++) {
           const v = V[y * cols + x];
           const n = v * 2.8; // → ~[0,1] for the "moving" regime
+          if (n < FUR_FLOOR) continue; // empty fur → leave the backdrop bare (cheap)
           const nn = n > 1 ? 1 : n;
           const gi = (nn * last) | 0;
           ctx.fillStyle = cheetah(nn);

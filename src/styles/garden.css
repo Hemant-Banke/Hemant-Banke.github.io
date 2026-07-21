@@ -403,14 +403,35 @@
 }
 .pdffs-title {
   flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4ch;
   font-size: 0.9rem;
   color: var(--ink);
+  overflow: hidden;
+  white-space: nowrap;
+}
+/* filename middle-ellipsis: the head shrinks with a …, the tail (extension)
+   always stays visible so you keep both ends of a long name */
+.pdffs-fname {
+  display: inline-flex;
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+}
+.fname-head {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.fname-tail {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
 .pdffs-pageinfo {
+  flex: 0 0 auto;
   font-size: 0.85rem;
   white-space: nowrap;
 }
@@ -481,11 +502,25 @@
   text-align: center;
   color: var(--ink);
 }
+.pdf-page-wrap {
+  position: relative; /* anchors the clickable link overlay */
+  flex: 0 0 auto;
+}
 .pdf-page {
   border: 1px solid var(--line);
   box-shadow: 0 12px 44px rgba(0, 0, 0, 0.62);
   background: #fff;
   display: block;
+}
+/* transparent hit-targets over in-PDF hyperlinks */
+.pdf-link {
+  position: absolute;
+  display: block;
+  border-radius: 2px;
+}
+.pdf-link:hover {
+  background: color-mix(in srgb, var(--cyan) 22%, transparent);
+  outline: 1px solid var(--cyan);
 }
 .pdf-status {
   position: relative;
