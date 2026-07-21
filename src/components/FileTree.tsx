@@ -22,7 +22,26 @@ export default function FileTree({
   activeSlug?: string;
 }) {
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  // On phone-width screens the explorer starts fully collapsed so it doesn't
+  // dominate the page; on larger screens folders start open.
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => {
+    const set = new Set<string>();
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 768px)").matches
+    ) {
+      const collect = (nodes: TreeNode[]) => {
+        for (const n of nodes) {
+          if (n.children?.length) {
+            set.add(n.slug);
+            collect(n.children);
+          }
+        }
+      };
+      collect(tree);
+    }
+    return set;
+  });
 
   const rows = useMemo(() => {
     const out: Row[] = [];

@@ -457,6 +457,8 @@
   z-index: 1;
   flex: 1;
   overflow: auto; /* both axes: zoomed pages scroll horizontally too */
+  /* allow one-finger scroll, but let JS own the two-finger pinch-zoom */
+  touch-action: pan-x pan-y;
   padding: clamp(1rem, 4vw, 3rem);
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;

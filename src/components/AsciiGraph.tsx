@@ -297,18 +297,51 @@ export default function AsciiGraph({
     let last = { x: 0, y: 0 };
     let downAt = { x: 0, y: 0 };
     let moved = false;
+    // Active pointers, so two fingers can pinch-zoom on touch devices.
+    const pointers = new Map<number, { x: number; y: number }>();
+    let pinchDist = 0;
 
     const pos = (e: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
       return { x: e.clientX - rect.left, y: e.clientY - rect.top };
     };
 
+    // Zoom by `factor` about screen point (mx,my), keeping that point fixed.
+    const zoomAt = (factor: number, mx: number, my: number) => {
+      const [wx, wy] = toWorld(mx, my);
+      view.k = Math.min(3, Math.max(0.3, view.k * factor));
+      view.x = mx - wx * view.k;
+      view.y = my - wy * view.k;
+      draw();
+    };
+    const pinchDistance = () => {
+      const [a, b] = [...pointers.values()];
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    };
+    const pinchMid = () => {
+      const [a, b] = [...pointers.values()];
+      return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    };
+
     const onDown = (e: PointerEvent) => {
       const p = pos(e);
+      pointers.set(e.pointerId, p);
+      canvas.setPointerCapture(e.pointerId);
+      if (pointers.size >= 2) {
+        // Entering a pinch — abandon any single-finger pan/drag in progress.
+        if (dragNode) {
+          if (!reduced) sim.alphaTarget(0);
+          dragNode.fx = null;
+          dragNode.fy = null;
+          dragNode = null;
+        }
+        panning = false;
+        pinchDist = pinchDistance();
+        return;
+      }
       downAt = p;
       moved = false;
       const id = hit(p.x, p.y);
-      canvas.setPointerCapture(e.pointerId);
       if (id) {
         const n = nodes.find((nn) => nn.id === id)!;
         dragNode = n;
@@ -322,6 +355,16 @@ export default function AsciiGraph({
     };
     const onMove = (e: PointerEvent) => {
       const p = pos(e);
+      if (pointers.has(e.pointerId)) pointers.set(e.pointerId, p);
+      if (pointers.size >= 2) {
+        const d = pinchDistance();
+        if (pinchDist > 0 && d > 0) {
+          const mid = pinchMid();
+          zoomAt(d / pinchDist, mid.x, mid.y);
+        }
+        pinchDist = d;
+        return;
+      }
       if (Math.hypot(p.x - downAt.x, p.y - downAt.y) > 4) moved = true;
       if (dragNode) {
         const [wx, wy] = toWorld(p.x, p.y);
@@ -345,8 +388,15 @@ export default function AsciiGraph({
       }
     };
     const onUp = (e: PointerEvent) => {
-      const p = pos(e);
       canvas.releasePointerCapture(e.pointerId);
+      const wasPinching = pointers.size >= 2;
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) pinchDist = 0;
+      // Still mid-gesture (a finger remains, or we were pinching) — not a click.
+      if (wasPinching || pointers.size >= 1) {
+        draw();
+        return;
+      }
       if (dragNode) {
         if (!reduced) sim.alphaTarget(0);
         if (!moved) {
@@ -362,25 +412,28 @@ export default function AsciiGraph({
       }
       panning = false;
       draw();
-      void p;
+    };
+    const onCancel = (e: PointerEvent) => {
+      pointers.delete(e.pointerId);
+      if (pointers.size < 2) pinchDist = 0;
+      if (dragNode) {
+        dragNode.fx = null;
+        dragNode.fy = null;
+        dragNode = null;
+      }
+      panning = false;
     };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const rect = canvas.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      const [wx, wy] = toWorld(mx, my);
-      const factor = Math.exp(-e.deltaY * 0.0015);
-      view.k = Math.min(3, Math.max(0.3, view.k * factor));
-      view.x = mx - wx * view.k;
-      view.y = my - wy * view.k;
-      draw();
+      zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - rect.left, e.clientY - rect.top);
     };
 
     canvas.style.cursor = "grab";
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerup", onUp);
+    canvas.addEventListener("pointercancel", onCancel);
     canvas.addEventListener("wheel", onWheel, { passive: false });
     const ro = new ResizeObserver(() => {
       resize();
@@ -393,6 +446,7 @@ export default function AsciiGraph({
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerup", onUp);
+      canvas.removeEventListener("pointercancel", onCancel);
       canvas.removeEventListener("wheel", onWheel);
       ro.disconnect();
     };

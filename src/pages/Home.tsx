@@ -16,9 +16,6 @@ export default function Home() {
       <section className="hero" aria-labelledby="hero-name">
         <LeniaField />
         <div className="layout hero-inner">
-          <p className="eyebrow">
-            <span className="eyebrow-prompt">$</span> whoami
-          </p>
           <AsciiBanner
             text={site.name}
             font={site.bannerFont}

@@ -127,6 +127,55 @@ export default function PdfFullscreen({
     };
   }, [onClose]);
 
+  // Two-finger pinch to zoom: preview with a cheap CSS transform during the
+  // gesture, then commit to a real (crisply re-rendered) scale on release.
+  useEffect(() => {
+    const scroller = scrollRef.current;
+    const pages = pagesRef.current;
+    if (!scroller || !pages) return;
+    let startDist = 0;
+    let startScale = 0;
+    let factor = 1;
+    let active = false;
+    const dist = (t: TouchList) =>
+      Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length !== 2) return;
+      active = true;
+      startDist = dist(e.touches);
+      startScale = scale;
+      factor = 1;
+      const rect = pages.getBoundingClientRect();
+      const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+      const my = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+      pages.style.transformOrigin = `${mx}px ${my}px`;
+    };
+    const onMove = (e: TouchEvent) => {
+      if (!active || e.touches.length !== 2) return;
+      e.preventDefault(); // suppress native scroll/zoom mid-pinch
+      factor = dist(e.touches) / (startDist || 1);
+      pages.style.transform = `scale(${factor})`;
+    };
+    const onEnd = () => {
+      if (!active) return;
+      active = false;
+      pages.style.transform = "";
+      pages.style.transformOrigin = "";
+      const next = Math.max(MIN_SCALE, Math.min(MAX_SCALE, startScale * factor));
+      if (Math.abs(next - scale) > 0.001) setScale(next);
+    };
+    scroller.addEventListener("touchstart", onStart, { passive: false });
+    scroller.addEventListener("touchmove", onMove, { passive: false });
+    scroller.addEventListener("touchend", onEnd);
+    scroller.addEventListener("touchcancel", onEnd);
+    return () => {
+      scroller.removeEventListener("touchstart", onStart);
+      scroller.removeEventListener("touchmove", onMove);
+      scroller.removeEventListener("touchend", onEnd);
+      scroller.removeEventListener("touchcancel", onEnd);
+    };
+  }, [scale]);
+
   const onScroll = () => {
     const container = pagesRef.current;
     const scroller = scrollRef.current;
