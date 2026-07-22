@@ -32,6 +32,7 @@ export default function PdfFullscreen({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const pagesRef = useRef<HTMLDivElement>(null);
+  const layerRef = useRef<HTMLDivElement>(null); // GPU transform preview during gestures
   const docRef = useRef<PDFDocumentProxy | null>(null);
   const renderToken = useRef(0);
   const tasks = useRef<RenderTask[]>([]);
@@ -94,12 +95,12 @@ export default function PdfFullscreen({
     if (!doc || !container) return;
     const token = ++renderToken.current;
     cancelRenders();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const coarse =
-      typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches;
-    // Extra resolution so CSS zoom stays sharp, dialled back for long docs and
-    // touch devices to keep the up-front render cheap.
-    const quality = doc.numPages > 12 ? 1.25 : coarse ? 1.5 : 2;
+    // Render crisp for the device pixel ratio (phones are often 3×), with extra
+    // `quality` headroom so CSS zoom stays sharp when you pinch in. Dialled back
+    // for long docs to bound the up-front memory/CPU.
+    const many = doc.numPages > 12;
+    const dpr = Math.min(window.devicePixelRatio || 1, many ? 2 : 3);
+    const quality = many ? 1.5 : 2.5;
     const renderScale = fitScale.current * quality;
     container.innerHTML = "";
     for (let p = 1; p <= doc.numPages; p++) {
@@ -230,52 +231,87 @@ export default function PdfFullscreen({
     };
   }, [onClose]);
 
-  // Pinch (touch) and ctrl-wheel (trackpad) zoom — both just nudge the CSS zoom,
-  // so they're smooth and never trigger a re-render.
+  // Pinch (touch) and ctrl-wheel (trackpad) zoom. While the gesture is live we
+  // preview with a cheap GPU `transform: scale()` on the zoom layer (no relayout
+  // → smooth), and only commit the real CSS zoom (+ scroll re-anchor) when it
+  // ends. Committing zooms toward the gesture anchor (midpoint / cursor).
   useEffect(() => {
     const scroller = scrollRef.current;
-    const pages = pagesRef.current;
-    if (!scroller || !pages) return;
+    const layer = layerRef.current;
+    if (!scroller || !layer) return;
+    let pinching = false;
     let startDist = 0;
-    let startZoom = 1;
-    let active = false;
+    let commitZoom = 1;
+    let liveTarget = 1;
+    let anchorX = 0;
+    let anchorY = 0;
+    let wheelTimer = 0;
     const dist = (t: TouchList) =>
       Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
-    const onStart = (e: TouchEvent) => {
+
+    const beginPreview = (clientX: number, clientY: number) => {
+      commitZoom = zoomRef.current;
+      liveTarget = commitZoom;
+      anchorX = clientX;
+      anchorY = clientY;
+      const rect = layer.getBoundingClientRect();
+      layer.style.transformOrigin = `${clientX - rect.left}px ${clientY - rect.top}px`;
+    };
+    const preview = (target: number) => {
+      liveTarget = clampZoom(target);
+      layer.style.transform = `scale(${liveTarget / commitZoom})`;
+    };
+    const commit = () => {
+      layer.style.transform = "";
+      layer.style.transformOrigin = "";
+      applyZoom(liveTarget, anchorX, anchorY); // sets real zoom + re-anchors scroll
+      setZoom(zoomRef.current);
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length !== 2) return;
-      active = true;
+      pinching = true;
       startDist = dist(e.touches);
-      startZoom = zoomRef.current;
+      beginPreview(
+        (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        (e.touches[0].clientY + e.touches[1].clientY) / 2,
+      );
     };
-    const onMove = (e: TouchEvent) => {
-      if (!active || e.touches.length !== 2) return;
+    const onTouchMove = (e: TouchEvent) => {
+      if (!pinching || e.touches.length !== 2) return;
       e.preventDefault(); // suppress native scroll/zoom mid-pinch
-      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-      applyZoom(startZoom * (dist(e.touches) / (startDist || 1)), midX, midY);
+      preview(commitZoom * (dist(e.touches) / (startDist || 1)));
     };
-    const onEnd = () => {
-      if (!active) return;
-      active = false;
-      setZoom(zoomRef.current); // sync state (percentage readout)
+    const onTouchEnd = () => {
+      if (!pinching) return;
+      pinching = false;
+      commit();
     };
     const onWheel = (e: WheelEvent) => {
       if (!e.ctrlKey) return; // plain scroll passes through; ctrl = trackpad pinch
       e.preventDefault();
-      applyZoom(zoomRef.current * Math.exp(-e.deltaY * 0.01), e.clientX, e.clientY);
-      setZoom(zoomRef.current);
+      if (pinching) return;
+      if (!wheelTimer) beginPreview(e.clientX, e.clientY);
+      preview(liveTarget * Math.exp(-e.deltaY * 0.01));
+      window.clearTimeout(wheelTimer);
+      wheelTimer = window.setTimeout(() => {
+        wheelTimer = 0;
+        commit();
+      }, 150);
     };
-    scroller.addEventListener("touchstart", onStart, { passive: false });
-    scroller.addEventListener("touchmove", onMove, { passive: false });
-    scroller.addEventListener("touchend", onEnd);
-    scroller.addEventListener("touchcancel", onEnd);
+
+    scroller.addEventListener("touchstart", onTouchStart, { passive: false });
+    scroller.addEventListener("touchmove", onTouchMove, { passive: false });
+    scroller.addEventListener("touchend", onTouchEnd);
+    scroller.addEventListener("touchcancel", onTouchEnd);
     scroller.addEventListener("wheel", onWheel, { passive: false });
     return () => {
-      scroller.removeEventListener("touchstart", onStart);
-      scroller.removeEventListener("touchmove", onMove);
-      scroller.removeEventListener("touchend", onEnd);
-      scroller.removeEventListener("touchcancel", onEnd);
+      scroller.removeEventListener("touchstart", onTouchStart);
+      scroller.removeEventListener("touchmove", onTouchMove);
+      scroller.removeEventListener("touchend", onTouchEnd);
+      scroller.removeEventListener("touchcancel", onTouchEnd);
       scroller.removeEventListener("wheel", onWheel);
+      window.clearTimeout(wheelTimer);
     };
   }, [applyZoom]);
 
@@ -397,7 +433,9 @@ export default function PdfFullscreen({
             </p>
           </div>
         )}
-        <div className="pdffs-pages" ref={pagesRef} hidden={status !== "ready"} />
+        <div className="pdf-zoomlayer" ref={layerRef} hidden={status !== "ready"}>
+          <div className="pdffs-pages" ref={pagesRef} />
+        </div>
       </div>
     </div>
   );

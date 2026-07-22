@@ -11,28 +11,10 @@
   align-items: center;
   isolation: isolate;
 }
-/* Readability scrim: sits above the simulation, below the content. Darkens the
-   left/centre (where the text column lives) so the neon type keeps its contrast,
-   while letting the organisms stay visible toward the right edge. */
-/* .hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    rgba(10, 13, 12, 0.5) 0%,
-    rgba(10, 13, 12, 0.3) 42%,
-    rgba(10, 13, 12, 0.1) 72%,
-    rgba(10, 13, 12, 0.0) 100%
-  );
-} */
 .lenia-field {
   position: absolute;
   inset: 0;
   z-index: -1;
-  opacity: 0.62;
   mask-image: radial-gradient(135% 105% at 50% 45%, #000 42%, transparent 100%);
   -webkit-mask-image: radial-gradient(135% 105% at 50% 45%, #000 42%, transparent 100%);
   /* a brief fade so the noisy first frame doesn't pop, but short enough that
@@ -44,7 +26,7 @@
     opacity: 0;
   }
   to {
-    opacity: 0.62;
+    opacity: 1;
   }
 }
 .hero-inner {
@@ -66,55 +48,145 @@
   white-space: pre;
   text-shadow: 0 0 16px rgba(69, 240, 138, 0.4);
 }
-.hero-role {
-  margin: 1rem 0 0.3rem;
-  font-size: clamp(0.95rem, 2vw, 1.15rem);
-  letter-spacing: 0.04em;
+/* Hero content — an editorial serif greeting framed by terminal-mono utility
+   type (eyebrow, buttons, socials), so the two type worlds are a deliberate
+   pairing rather than a clash. */
+.hero-intro-wrap {
+  max-width: 44rem;
 }
-.hero-tagline {
+
+/* Mono eyebrow: the role line, tracked + uppercase, tied to the field with a
+   small prompt glyph. */
+.hero-eyebrow {
   margin: 0 0 1.4rem;
-  max-width: 56ch;
-  color: var(--ink);
-}
-.hero-typed {
-  min-height: 4.6rem;
-  margin-bottom: 1.4rem;
+  font-family: var(--font-mono);
+  font-size: clamp(0.66rem, 1.2vw, 0.76rem);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
   color: var(--dim);
 }
-.typed-line {
-  white-space: pre-wrap;
+.hero-eyebrow-mark {
+  margin-right: 0.7ch;
+  color: var(--cyan);
+  letter-spacing: 0;
 }
-/* Readability: a stacked dark text-shadow halo keeps the role + tagline legible
-   over the colourful field. The ASCII wordmark keeps its own green glow. */
-.hero-role,
-.hero-tagline {
-  text-shadow:
-    0 0 4px var(--bg),
-    0 0 4px var(--bg),
-    0 0 8px var(--bg),
-    0 1px 3px var(--bg);
+
+.hero-hi {
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.015em;
+  font-size: clamp(2rem, 2.5rem, 3rem);
+  margin: 0 0 1.5rem;
+  color: var(--ink-strong);
+}
+/* The name keeps the same colour as the greeting; the accent is a hand-drawn
+   green vine that grows in beneath it — the signature that ties the copy to the
+   living particle field / "digital garden". */
+.hero-name {
+  position: relative;
+  white-space: nowrap;
+}
+
+.hero-intro {
+  font-size: clamp(1rem, 1rem, 1.2rem);
+  line-height: 1.3;
+  max-width: 42ch;
+  margin: 0 0 2.2rem;
+  color: var(--ink-strong);
 }
 .hero-cta {
   display: flex;
-  gap: 0.8rem;
+  gap: 0.9rem;
   flex-wrap: wrap;
-  margin-bottom: 1.6rem;
+  align-items: center;
+  margin-bottom: 2rem;
 }
-/* Social links sit on an opaque background chip (no shadow) that reacts to
-   hover / click. */
+/* Primary CTA into the garden: filled green so the main path reads first; the
+   secondary "see projects" keeps the default ghost .btn. */
+.hero-cta .btn {
+  padding: 0.6rem 1.15rem;
+}
+.hero-cta .btn-primary {
+  border-color: var(--green);
+  background: var(--green);
+  color: var(--bg);
+  font-weight: 500;
+  box-shadow: 0 0 22px rgba(69, 240, 138, 0.28);
+}
+.hero-cta .btn-primary:hover {
+  color: var(--bg);
+  background: #5cf59b;
+  box-shadow: 0 0 30px rgba(69, 240, 138, 0.5);
+}
+
+/* Orchestrated load reveal: eyebrow → greeting → vine → intro → CTAs → socials,
+   a single staggered entrance over the ambient field. */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-eyebrow,
+  .hero-hi,
+  .hero-intro,
+  .hero-cta,
+  .hero-intro-wrap .socials {
+    opacity: 0;
+    animation: hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .hero-eyebrow {
+    animation-delay: 0.05s;
+  }
+  .hero-hi {
+    animation-delay: 0.16s;
+  }
+  .hero-intro {
+    animation-delay: 0.34s;
+  }
+  .hero-cta {
+    animation-delay: 0.46s;
+  }
+  .hero-intro-wrap .socials {
+    animation-delay: 0.56s;
+  }
+  .hero-name-vine {
+    clip-path: inset(0 100% 0 0);
+    animation: vine-grow 0.9s cubic-bezier(0.65, 0, 0.35, 1) 0.62s both;
+  }
+}
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.7rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes vine-grow {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+/* Socials row sits under the CTAs, quiet and mono, on the field itself. */
+.hero-intro-wrap .socials {
+  gap: 1.6ch;
+}
+/* Social links sit directly on the field (no background chip); a subtle
+   text-shadow keeps them legible, and hover/active tint the label. */
 .hero-inner .socials a {
-  background: var(--bg);
+  background: transparent;
   padding: 0.06em 0.4em;
   transition: background 0.12s ease, color 0.12s ease;
 }
 .hero-inner .socials a:hover {
-  background: var(--bg-2);
+  background: transparent;
 }
 .hero-inner .socials a:hover .socials-label {
   color: var(--ink-strong);
 }
-.hero-inner .socials a:active {
-  background: var(--line);
+.hero-inner .socials a:active .socials-label {
+  color: var(--green);
 }
 
 /* recent notes block on home */

@@ -397,8 +397,8 @@
   gap: 0.8rem;
   padding: 0.6rem clamp(0.8rem, 3vw, 2rem);
   border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--bg) 84%, transparent);
-  backdrop-filter: blur(8px);
+  /* opaque (no backdrop-filter: blur — it re-blurs every scroll frame → jank) */
+  background: var(--bg);
   flex-wrap: nowrap; /* keep the whole bar on one line */
 }
 .pdffs-title {
@@ -501,6 +501,10 @@
   min-width: 4ch;
   text-align: center;
   color: var(--ink);
+}
+/* wraps the page column; carries the live GPU transform preview while zooming */
+.pdf-zoomlayer {
+  will-change: transform;
 }
 .pdf-page-wrap {
   position: relative; /* anchors the clickable link overlay */

@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import LeniaField from "../components/LeniaField";
-import AsciiBanner from "../components/AsciiBanner";
 import Socials from "../components/Socials";
 import Starred from "../components/Starred";
 import { site } from "../data/site";
@@ -16,26 +15,25 @@ export default function Home() {
       <section className="hero" aria-labelledby="hero-name">
         <LeniaField />
         <div className="layout hero-inner">
-          <AsciiBanner
-            text={site.name}
-            font={site.bannerFont}
-            className="wordmark-wrap"
-          />
-          <p className="hero-role accent-cyan">{site.role}</p>
-          <p className="hero-tagline">{site.tagline}</p>
+          <div className="hero-intro-wrap">
+            <h1 id="hero-name" className="hero-hi">
+              Hi, I'm{" "}
+              <span className="hero-name">
+                {site.name}
+              </span>
+            </h1>
+            <p className="hero-intro">{site.intro}</p>
 
-          {/* log lines removed — keep the vertical space they occupied */}
-          <div className="hero-typed" aria-hidden="true" />
-
-          <div className="hero-cta">
-            <Link to="/digital-garden" className="btn">
-              ▸ enter the graph
-            </Link>
-            <Link to="/projects" className="btn">
-              ▸ see projects
-            </Link>
+            <div className="hero-cta">
+              <Link to="/digital-garden" className="btn">
+                ▸ enter the garden
+              </Link>
+              <Link to="/projects" className="btn">
+                ▸ see projects
+              </Link>
+            </div>
+            <Socials compact />
           </div>
-          <Socials compact />
         </div>
       </section>
 
