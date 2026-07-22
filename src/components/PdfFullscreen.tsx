@@ -65,9 +65,12 @@ export default function PdfFullscreen({
   };
 
   // Set the CSS zoom to `target`, keeping the content point under (clientX,
-  // clientY) fixed — i.e. zoom toward the cursor / pinch midpoint. Scroll
-  // offsets live in the zoomed content's pixels, so a point at scroll offset
-  // (s + a) before scales to (s + a)·ratio after; solve for the new scroll.
+  // clientY) fixed — i.e. zoom toward the cursor / pinch midpoint. We anchor
+  // against the pages element's *actual* rects: record where the cursor sits as
+  // a fraction of the pages box, apply the zoom, then nudge scroll so that same
+  // fraction lands back under the cursor. Reading real geometry keeps it correct
+  // regardless of the scroller's padding and the column's horizontal centering
+  // (the earlier closed-form math ignored the padding and drifted diagonally).
   const applyZoom = useCallback((target: number, clientX: number, clientY: number) => {
     const scroller = scrollRef.current;
     const pages = pagesRef.current;
@@ -75,16 +78,14 @@ export default function PdfFullscreen({
     const z1 = clampZoom(target);
     const z0 = zoomRef.current;
     if (z1 === z0) return;
-    const rect = scroller.getBoundingClientRect();
-    const ax = clientX - rect.left;
-    const ay = clientY - rect.top;
-    const sl = scroller.scrollLeft;
-    const st = scroller.scrollTop;
-    const ratio = z1 / z0;
+    const before = pages.getBoundingClientRect();
+    const fx = before.width ? (clientX - before.left) / before.width : 0;
+    const fy = before.height ? (clientY - before.top) / before.height : 0;
     pages.style.setProperty("zoom", String(z1));
-    scroller.scrollLeft = (sl + ax) * ratio - ax;
-    scroller.scrollTop = (st + ay) * ratio - ay;
     zoomRef.current = z1;
+    const after = pages.getBoundingClientRect(); // reflects the new zoom
+    scroller.scrollLeft += after.left + fx * after.width - clientX;
+    scroller.scrollTop += after.top + fy * after.height - clientY;
   }, []);
 
   // Rasterise every page once at fit-width × QUALITY (× dpr). Not called on
@@ -95,12 +96,22 @@ export default function PdfFullscreen({
     if (!doc || !container) return;
     const token = ++renderToken.current;
     cancelRenders();
-    // Render crisp for the device pixel ratio (phones are often 3×), with extra
-    // `quality` headroom so CSS zoom stays sharp when you pinch in. Dialled back
-    // for long docs to bound the up-front memory/CPU.
+    // Render crisp for the device pixel ratio, with extra `quality` headroom so
+    // CSS zoom stays sharp when you pinch in. Dialled back for long docs to bound
+    // the up-front memory/CPU.
+    //
+    // Phones (coarse pointer) keep the full-resolution path: pages are physically
+    // small, screens are high-DPI, and the total cost is modest. On laptops and
+    // larger the page is much wider, so a 5–6× oversample (fit × quality × dpr)
+    // produced enormous canvases per page and made the viewer sluggish — cap the
+    // oversample there for fast rendering that's still crisp at fit width.
     const many = doc.numPages > 12;
-    const dpr = Math.min(window.devicePixelRatio || 1, many ? 2 : 3);
-    const quality = many ? 1.5 : 2.5;
+    const coarse =
+      typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches;
+    const dpr = coarse
+      ? Math.min(window.devicePixelRatio || 1, many ? 2 : 3)
+      : Math.min(window.devicePixelRatio || 1, 2);
+    const quality = coarse ? (many ? 1.5 : 2.5) : many ? 1.1 : 1.5;
     const renderScale = fitScale.current * quality;
     container.innerHTML = "";
     for (let p = 1; p <= doc.numPages; p++) {

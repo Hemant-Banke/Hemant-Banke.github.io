@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type CSSProperties, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AsciiGraph from "../components/AsciiGraph";
 import FileTree from "../components/FileTree";
@@ -10,7 +10,13 @@ type View = "graph" | "explorer";
 export default function Garden() {
   const narrow = useIsNarrow();
   const [view, setView] = useState<View>(narrow ? "explorer" : "graph");
+  // Active topic filter for the explorer note list (null = all topics).
+  const [topic, setTopic] = useState<string | null>(null);
   const notes = recentNotes();
+  const shownNotes = useMemo(
+    () => (topic ? notes.filter((n) => n.groupSlug === topic) : notes),
+    [notes, topic],
+  );
   const linkEdges = manifest.graph.edges.filter((e) => e.kind === "link").length;
 
   return (
@@ -74,9 +80,42 @@ export default function Garden() {
         <div className="explorer-grid">
           <FileTree tree={manifest.tree} />
           <div className="box note-list-box">
-            <span className="box-title">all notes — newest first</span>
+            <span className="box-title">
+              {topic
+                ? `${manifest.groups.find((g) => g.slug === topic)?.name}/ — newest first`
+                : "all notes — newest first"}
+            </span>
+
+            <div
+              className="topic-filters"
+              role="group"
+              aria-label="filter notes by topic"
+            >
+              <button
+                className="topic-chip"
+                aria-pressed={topic === null}
+                onClick={() => setTopic(null)}
+              >
+                all <span className="dim">({notes.length})</span>
+              </button>
+              {manifest.groups.map((g) => (
+                <button
+                  key={g.slug}
+                  className="topic-chip"
+                  aria-pressed={topic === g.slug}
+                  onClick={() => setTopic((t) => (t === g.slug ? null : g.slug))}
+                  style={{ "--chip": g.color } as CSSProperties}
+                >
+                  <span className="topic-dot" aria-hidden="true">
+                    ●
+                  </span>
+                  {g.name} <span className="dim">({g.noteSlugs.length})</span>
+                </button>
+              ))}
+            </div>
+
             <ul className="mono-list note-list">
-              {notes.map((n) => (
+              {shownNotes.map((n) => (
                 <li key={n.slug} className="note-list-item">
                   <Link to={`/digital-garden/${n.slug}`} className="note-list-link">
                     {n.star && (

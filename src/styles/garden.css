@@ -86,6 +86,45 @@
 .note-list-box {
   padding: 1.2rem 1rem 1rem;
 }
+
+/* Topic filters — chips over the note list; each carries its group colour via
+   the --chip custom property and lights up when active. */
+.topic-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.2rem 0 1rem;
+}
+.topic-chip {
+  --chip: var(--dim);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5ch;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--line);
+  background: var(--bg-1);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+.topic-chip:hover {
+  border-color: var(--chip);
+  color: var(--ink-strong);
+}
+.topic-chip[aria-pressed="true"] {
+  border-color: var(--chip);
+  background: color-mix(in srgb, var(--chip) 16%, var(--bg-1));
+  color: var(--ink-strong);
+}
+.topic-chip .topic-dot {
+  color: var(--chip);
+}
+.topic-chip:focus-visible {
+  outline: 2px solid var(--chip);
+  outline-offset: 1px;
+}
 .filetree-root {
   margin-bottom: 0.2rem;
   font-weight: 500;
