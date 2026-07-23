@@ -31,8 +31,17 @@ const BETA = 0.3; // inner fraction of the radius that is purely repulsive
 const FORCE = 9; // global force scale
 const DT = 0.02; // integration step
 const FRICTION_HALFLIFE = 0.042; // velocity half-life (s) → damping
-const DENSITY = 520; // screen px² per particle (smaller = more particles)
-const MAX_PARTICLES = 3200;
+// Particle count is derived from a target *local* density — the average number
+// of particles within one interaction radius — instead of a fixed count per
+// screen area. The interaction radius (rMax) is smaller on small screens, so a
+// fixed areal density leaves phones with far fewer neighbours per particle and
+// the species never gather into organisms (it just looked like drifting dots).
+// Solving for a constant neighbour count instead — n = NEIGHBORS·area/(π·rMax²)
+// — gives every screen the same organism richness, which means small screens
+// get proportionally more particles. That's the density phones were missing.
+const NEIGHBORS = 52; // avg particles within one interaction radius
+const MIN_PARTICLES = 200; // floor so a tiny canvas still shows something
+const MAX_PARTICLES = 5000; // ceiling so very large displays stay bounded
 const CORE = 2; // solid dot radius (px)
 const GLOW = 2; // glow falloff radius (px)
 
@@ -102,7 +111,8 @@ export default function LeniaField() {
     let nextP = new Int32Array(0); // linked-list of particles within a cell
 
     const seed = () => {
-      n = Math.min(MAX_PARTICLES, Math.max(200, Math.round((W * H) / DENSITY)));
+      const target = (NEIGHBORS * W * H) / (Math.PI * rMax * rMax);
+      n = Math.min(MAX_PARTICLES, Math.max(MIN_PARTICLES, Math.round(target)));
       px = new Float32Array(n);
       py = new Float32Array(n);
       vx = new Float32Array(n);
