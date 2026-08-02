@@ -1,8 +1,29 @@
 import { lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
+import ErrorBoundary from "./ErrorBoundary";
 
 // pdfjs is heavy — keep it in its own chunk, only fetched when a PDF opens.
 const PdfFullscreen = lazy(() => import("./PdfFullscreen"));
+
+function PdfErrorFallback({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="page layout">
+      <div className="section-head">
+        <span className="hash">##</span>
+        <h1>
+          <span className="path">~/pdf</span>
+        </h1>
+      </div>
+      <p className="lead dim">
+        ! the PDF viewer hit an error in this browser. Check the console for
+        details, or try again.
+      </p>
+      <button className="btn" onClick={onClose}>
+        ‹ back
+      </button>
+    </div>
+  );
+}
 
 /**
  * Renders the full-screen PDF viewer as a route's content (used for pdf-only
@@ -23,8 +44,10 @@ export default function PdfRoute({
     else navigate(fallbackTo);
   };
   return (
-    <Suspense fallback={null}>
-      <PdfFullscreen url={url} downloadName={downloadName} onClose={close} />
-    </Suspense>
+    <ErrorBoundary fallback={<PdfErrorFallback onClose={close} />}>
+      <Suspense fallback={null}>
+        <PdfFullscreen url={url} downloadName={downloadName} onClose={close} />
+      </Suspense>
+    </ErrorBoundary>
   );
 }
