@@ -5,8 +5,6 @@ tags: [thought, life]
 summary: CONTRIBUTE NET POSITIVE TO THE WORLD
 ---
 
-# Make Things Happen
-
 - You can make things happen. 
 - Innovation is not the default. The default is extinction. 
 - It takes many smart people actively doing things, contributing net positive, to make things happen, to innovate, to realize the future for the entire civilization. 

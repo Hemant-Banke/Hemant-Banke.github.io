@@ -5,8 +5,6 @@ tags: [thought, life, world models, simulations]
 summary: The universe is likely simulated, so write an interesting story.
 ---
 
-# Simulated Reality
-
 [[World Models]] \
 [[Rick&Morty Infinite Worlds]]
 

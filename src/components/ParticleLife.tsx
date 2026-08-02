@@ -11,7 +11,9 @@ import { useReducedMotion } from "../lib/hooks";
 // settle — every frame is emergent, nothing is pre-baked.
 //
 // Rendered as soft additive glow dots in the site palette (green / cyan /
-// magenta / violet) on near-black.
+// magenta / violet) on near-black — always, regardless of the page theme.
+// Additive glow only reads against a near-black backdrop, and a dark "window"
+// onto the sim reads fine set into an otherwise light page.
 
 // --- species palette --------------------------------------------------------
 // [r, g, b] per species, drawn from the terminal accent colours.
@@ -22,6 +24,7 @@ const SPECIES: [number, number, number][] = [
   [139, 124, 255], // violet
 ];
 const NSPECIES = SPECIES.length;
+const WASH = "rgba(10,13,12,0.34)";
 
 // --- simulation tunables ----------------------------------------------------
 const R_FRACTION = 0.11; // interaction radius as a fraction of min(W,H)
@@ -76,7 +79,7 @@ function makeSprite([r, g, b]: [number, number, number]) {
   return c;
 }
 
-export default function LeniaField() {
+export default function ParticleLife() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const reduced = useReducedMotion();
 
@@ -240,7 +243,7 @@ export default function LeniaField() {
     const render = () => {
       // Faint trail wash keeps a little motion smear over the dark backdrop.
       ctx.globalCompositeOperation = "source-over";
-      ctx.fillStyle = "rgba(10,13,12,0.34)";
+      ctx.fillStyle = WASH;
       ctx.fillRect(0, 0, W, H);
       ctx.globalCompositeOperation = "lighter";
       for (let i = 0; i < n; i++) {
@@ -295,5 +298,5 @@ export default function LeniaField() {
     };
   }, [reduced]);
 
-  return <canvas ref={canvasRef} className="lenia-field" aria-hidden="true" />;
+  return <canvas ref={canvasRef} className="particle-life-field" aria-hidden="true" />;
 }

@@ -23,10 +23,12 @@ static, deployed to GitHub Pages (root domain, `base: '/'`).
   settle; reduced-motion runs the sim synchronously. Reused for the note-page
   mini-graph via `mini` + `focusId`.
 - **Explorer** — `src/components/FileTree.tsx`: collapsible `tree`-style view.
-- **Hero** — `src/components/LeniaField.tsx` (SmoothLife CA background:
-  self-organising green/cyan/magenta organisms on `<canvas>`, tuned glider
-  regime so it never just flashes) + figlet wordmark (`src/lib/ascii.ts`) +
-  `Typed.tsx`.
+- **Hero** — two-column split (`src/pages/Home.tsx` + `hero.css`): text on the
+  left, `src/components/ParticleLife.tsx` filling the right half edge-to-edge
+  (thin band above the text on phones). Agent-based particle-life sim
+  (species + attraction matrix) on `<canvas>`, additive-glow on dark /
+  darker-palette normal-blend on light, swapping live on the `themechange`
+  event. Plus figlet wordmark (`src/lib/ascii.ts`) + `Typed.tsx`.
 - **ASCII reaction-diffusion** — `src/components/AsciiField.tsx`: Gray-Scott
   reaction-diffusion (moving-spots regime) on a character grid, drawn as
   density-ramped glyphs. Emergent drifting/splitting cells. Used as the

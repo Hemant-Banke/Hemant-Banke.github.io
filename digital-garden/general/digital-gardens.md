@@ -5,8 +5,6 @@ tags: [tools, thought]
 summary: A garden is grown in public, out of order, and never quite finished.
 ---
 
-# Digital Gardens
-
 A **digital garden** rejects the blog's tyranny of chronology. Posts aren't a
 feed to be consumed newest-first; they're plants at different stages of growth,
 cross-linked into a living map.

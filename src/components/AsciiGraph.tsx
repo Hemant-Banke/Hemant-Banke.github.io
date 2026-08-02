@@ -80,6 +80,40 @@ export default function AsciiGraph({
     const ctx = canvas.getContext("2d")!;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
+    // Label text/star colours track the theme's CSS custom properties (not
+    // hardcoded hex) so they stay legible whichever view is active.
+    const readThemeColors = () => {
+      const cs = getComputedStyle(canvas);
+      return {
+        active: cs.getPropertyValue("--ink-strong").trim() || "#eaf3ee",
+        dim: cs.getPropertyValue("--dim").trim() || "#6b7a74",
+        ink: cs.getPropertyValue("--ink").trim() || "#cdd8d2",
+        star: cs.getPropertyValue("--amber").trim() || "#ffc061",
+      };
+    };
+    let themeColors = readThemeColors();
+    let isLight = document.documentElement.dataset.theme === "light";
+
+    // Group colours (n.color / s.color / t.color) are baked into the content
+    // manifest at dark-theme brightness and don't know about the page theme —
+    // on the light view the stippled edge glyphs read as washed-out pastel at
+    // low alpha, so darken them (uniform RGB scale keeps hue/saturation,
+    // only drops lightness).
+    const edgeColorCache = new Map<string, string>();
+    const edgeColor = (hex: string) => {
+      if (!isLight) return hex;
+      const cached = edgeColorCache.get(hex);
+      if (cached) return cached;
+      const n = parseInt(hex.slice(1), 16);
+      const factor = 0.6;
+      const r = Math.round(((n >> 16) & 255) * factor);
+      const g = Math.round(((n >> 8) & 255) * factor);
+      const b = Math.round((n & 255) * factor);
+      const out = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+      edgeColorCache.set(hex, out);
+      return out;
+    };
+
     const view = { x: 0, y: 0, k: mini ? 0.85 : 1 };
     let hover: string | null = null;
     let selected: string | null = focusId ?? null;
@@ -176,7 +210,7 @@ export default function AsciiGraph({
         const incident = active && (nid(l.source) === active || nid(l.target) === active);
         const dim = active && !incident;
         ctx.globalAlpha = dim ? 0.06 : incident ? 0.9 : 0.32;
-        ctx.fillStyle = l.kind === "link" ? t.color : s.color;
+        ctx.fillStyle = edgeColor(l.kind === "link" ? t.color : s.color);
         const step = Math.max(cw * 0.9, 6);
         for (let d = step; d < len - step; d += step) {
           const px = x0 + (dx * d) / len;
@@ -215,9 +249,9 @@ export default function AsciiGraph({
           const totalW = dotW + label.length * cw;
           const x0 = x - totalW / 2;
           // starred notes get an amber ★ instead of the group-coloured bullet
-          ctx.fillStyle = n.star ? "#ffc061" : n.color;
+          ctx.fillStyle = n.star ? themeColors.star : n.color;
           ctx.fillText(n.star ? "★" : "●", x0, y);
-          ctx.fillStyle = active === n.id ? "#eaf3ee" : dim ? "#6b7a74" : "#cdd8d2";
+          ctx.fillStyle = active === n.id ? themeColors.active : dim ? themeColors.dim : themeColors.ink;
           ctx.fillText(label, x0 + dotW, y);
           rects.push({
             id: n.id,
@@ -429,6 +463,13 @@ export default function AsciiGraph({
       zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX - rect.left, e.clientY - rect.top);
     };
 
+    const onThemeChange = () => {
+      themeColors = readThemeColors();
+      isLight = document.documentElement.dataset.theme === "light";
+      draw();
+    };
+    window.addEventListener("themechange", onThemeChange);
+
     canvas.style.cursor = "grab";
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
@@ -449,6 +490,7 @@ export default function AsciiGraph({
       canvas.removeEventListener("pointercancel", onCancel);
       canvas.removeEventListener("wheel", onWheel);
       ro.disconnect();
+      window.removeEventListener("themechange", onThemeChange);
     };
   }, [nodes, links, adj, height, reduced, navigate, focusId, mini]);
 

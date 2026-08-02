@@ -7,19 +7,48 @@
   border-bottom: 1px solid var(--line);
   /* fill the viewport below the sticky nav (3.25rem tall) */
   min-height: calc(100svh - 3.25rem);
+}
+/* Two-column split: text on the left, particle field running edge-to-edge
+   on the right. On phones the field collapses to a thin band (below) —
+   `order` moves it without unmounting the canvas, so the sim never restarts. */
+.hero-split {
+  display: flex;
+  align-items: stretch;
+  min-height: calc(100svh - 3.25rem);
+  width: 100%;
+}
+.hero-text-col {
+  flex: 1 1 50%;
+  min-width: 0;
   display: flex;
   align-items: center;
-  isolation: isolate;
+  padding-top: clamp(2rem, 5vw, 4rem);
+  padding-bottom: clamp(2rem, 5vw, 4rem);
+  padding-right: var(--gutter);
+  /* Match the nav's `.layout` (max-width: 1180px, centered) left inset, so
+     the greeting lines up with the nav brand instead of hugging the true
+     viewport edge once the screen is wider than the layout column. */
+  padding-left: max(var(--gutter), calc((100vw - 1180px) / 2 + var(--gutter)));
 }
-.lenia-field {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  mask-image: radial-gradient(135% 105% at 50% 45%, #000 42%, transparent 100%);
-  -webkit-mask-image: radial-gradient(135% 105% at 50% 45%, #000 42%, transparent 100%);
+.hero-field-col {
+  flex: 1 1 50%;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  /* The sim always renders dark (additive glow needs a near-black backdrop
+     to read) regardless of the page theme, so this panel's own background
+     stays fixed dark too — avoids a flash of the light page bg before the
+     canvas paints its first frame. */
+  background: #0a0d0c;
+  border-left: 1px solid var(--line);
   /* a brief fade so the noisy first frame doesn't pop, but short enough that
      you still watch the emergence from the very beginning */
   animation: field-in 0.5s ease-out both;
+}
+.particle-life-field {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 @keyframes field-in {
   from {
@@ -28,13 +57,6 @@
   to {
     opacity: 1;
   }
-}
-.hero-inner {
-  position: relative;
-  z-index: 2; /* above the readability scrim (.hero::before) */
-  width: 100%;
-  padding-top: 2rem;
-  padding-bottom: 2rem;
 }
 .wordmark-wrap {
   width: 100%;
@@ -90,7 +112,6 @@
 .hero-intro {
   font-size: clamp(1rem, 1rem, 1.2rem);
   line-height: 1.3;
-  max-width: 42ch;
   margin: 0 0 2.2rem;
   color: var(--ink-strong);
 }
@@ -172,20 +193,20 @@
 .hero-intro-wrap .socials {
   gap: 1.6ch;
 }
-/* Social links sit directly on the field (no background chip); a subtle
-   text-shadow keeps them legible, and hover/active tint the label. */
-.hero-inner .socials a {
+/* Social links sit directly on the text panel (no background chip); hover/
+   active tint the label. */
+.hero-text-col .socials a {
   background: transparent;
   padding: 0.06em 0.4em;
   transition: background 0.12s ease, color 0.12s ease;
 }
-.hero-inner .socials a:hover {
+.hero-text-col .socials a:hover {
   background: transparent;
 }
-.hero-inner .socials a:hover .socials-label {
+.hero-text-col .socials a:hover .socials-label {
   color: var(--ink-strong);
 }
-.hero-inner .socials a:active .socials-label {
+.hero-text-col .socials a:active .socials-label {
   color: var(--green);
 }
 
@@ -218,12 +239,21 @@
   border: none;
   color: var(--ink);
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   gap: 0.8ch;
-  flex-wrap: wrap;
 }
 .recent-link:hover {
   border: none;
+}
+/* title + folder stick together and wrap as one unit when they overflow;
+   the date stays put on the right. */
+.recent-left {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8ch;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .recent-title {
   color: var(--ink-strong);
@@ -233,11 +263,37 @@
   color: var(--green);
 }
 .recent-date {
-  margin-left: auto;
+  flex-shrink: 0;
   font-size: 0.82rem;
 }
 .recent-summary {
   margin: 0.35rem 0 0;
   font-size: 0.9rem;
   max-width: var(--measure);
+}
+
+/* Phones: the field collapses from a half-screen column to a thin band above
+   the text. `order` (not a JSX reorder) so the ParticleLife canvas never
+   unmounts/remounts crossing the breakpoint — the sim just keeps running. */
+@media (max-width: 700px) {
+  .hero-split {
+    flex-direction: column;
+    min-height: auto;
+  }
+  .hero-text-col {
+    padding: 1.8rem var(--gutter) 2.5rem;
+  }
+  .hero-field-col {
+    order: -1;
+    flex: none;
+    height: clamp(88px, 24vh, 160px);
+    border-left: none;
+    border-bottom: 1px solid var(--line);
+  }
+  /* "[ open graph → ]" drops to its own line instead of squeezing onto the
+     heading's row. */
+  .home-recent-all {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
 }

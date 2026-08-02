@@ -59,6 +59,35 @@
   color-scheme: dark;
 }
 
+/* Light view — same terminal grammar (paper canvas, phosphor ink, three
+   disciplined accents), just inverted: near-white canvas, darkened/saturated
+   accents so they still clear AA contrast on a light background. */
+:root[data-theme="light"] {
+  --bg: #f3f5f1;
+  --bg-1: #eaede6;
+  --bg-2: #dfe4da;
+  --line: #c6cec1;
+  --line-soft: #d6ddd0;
+
+  --ink: #2b332e;
+  --ink-strong: #10140f;
+  --dim: #5b6660;
+  --dimmer: #8b958c;
+
+  --green: #197a48;
+  --cyan: #0d7a8c;
+  --magenta: #a92a8c;
+  --amber: #96620f;
+  --violet: #5340c4;
+
+  --accent: var(--green);
+  --accent-dim: #bfe0cd;
+
+  --glow: 0 0 1px currentColor, 0 0 10px rgba(25, 122, 72, 0.15);
+
+  color-scheme: light;
+}
+
 *,
 *::before,
 *::after {

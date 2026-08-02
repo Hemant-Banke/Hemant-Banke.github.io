@@ -5,8 +5,6 @@ tags: [tools, thought]
 summary: The best thinking tools disappear and leave only the thought.
 ---
 
-# On Tools for Thought
-
 A tool for thought earns its name when it stops being a place you *visit* and
 becomes a texture your thinking *has*. The interface recedes; the ideas stay.
 

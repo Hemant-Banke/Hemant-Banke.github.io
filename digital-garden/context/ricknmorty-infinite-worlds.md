@@ -5,8 +5,6 @@ tags: [shows]
 summary: Very brief summary of the Infinite worlds idea in some Rick and Morty shows.
 ---
 
-# Rick&Morty Infinite Worlds
-
 Rick&Morty "The Ricks must be Crazy" (S2E6, Batteries), "Fear No Mort" (S7E10, best) and also the "Inception" have a somewhat common angle, with worlds inside of worlds.
 
 The Batteries episode, is especially the one which is real in all levels and the child world is created by a citizen of the parent world, for the same purpose. \
