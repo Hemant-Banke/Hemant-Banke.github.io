@@ -13,14 +13,22 @@ const F = 0.018; // feed rate
 const K = 0.051; // kill rate
 const DU = 0.16; // U diffusion
 const DV = 0.08; // V diffusion
-const SUBSTEPS = 10; // reaction iterations per rendered frame (evolution speed)
-const FRAME_MS = 80; // ~12fps render cadence — it's an ambient backdrop
-const FUR_FLOOR = 0.05; // skip near-empty cells so we don't fillText the whole grid
+// `draw()`'s per-cell `ctx.fillText()` call is the dominant cost here (real
+// profiling: this component alone accounts for ~99% of main-thread samples
+// in Safari, vs. ~2% in Chrome — Safari's Canvas2D fillText throughput for
+// many small per-frame calls trails Chrome's badly). SUBSTEPS/FRAME_MS/
+// FUR_FLOOR/FONT_PX below are tuned down from their original values
+// specifically to cut total fillText calls/sec well below what was choking
+// Safari's main thread — this is a purely decorative, low-opacity backdrop,
+// so a somewhat coarser/slower field is an easy trade.
+const SUBSTEPS = 7; // reaction iterations per rendered frame (evolution speed)
+const FRAME_MS = 110; // ~9fps render cadence — it's an ambient backdrop
+const FUR_FLOOR = 0.09; // skip near-empty cells so we don't fillText the whole grid
 
 // Density ramp with no blanks: the low-density "fur" is a fine speckle and the
 // reaction-diffusion spots pack into dense glyphs — a cheetah pelt.
 const RAMP = ".·:-=+*oO#@";
-const FONT_PX = 19; // larger glyphs ⇒ far fewer cells drawn per frame
+const FONT_PX = 24; // larger glyphs ⇒ far fewer cells drawn per frame
 
 // Cheetah palette — golden-tan fur (low density) shading through amber into
 // dark-brown spot cores (dense). Each Gray-Scott spot renders as a tan-rimmed
@@ -34,6 +42,14 @@ const cheetah = (h: number) => {
   const [a, b, t] = h < 0.5 ? [FUR, AMBER, h * 2] : [AMBER, SPOT, (h - 0.5) * 2];
   return `rgb(${mix(a, b, t, 0)},${mix(a, b, t, 1)},${mix(a, b, t, 2)})`;
 };
+// draw()'s per-cell fillText is already the dominant cost (see SUBSTEPS/
+// FRAME_MS/FUR_FLOOR/FONT_PX above); the *other* per-cell work — a fresh
+// cheetah()/mix() float computation plus a new `rgb(...)` template-string
+// allocation, for every single cell, every frame — is pure waste on top of
+// that, since RAMP already only has 11 distinct glyphs. Precompute one fill
+// colour per glyph once (module load, not per frame) and look it up instead.
+const RAMP_LAST = RAMP.length - 1;
+const PALETTE = Array.from({ length: RAMP.length }, (_, gi) => cheetah(gi / RAMP_LAST));
 
 export default function AsciiField({ className = "ascii-field" }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -45,7 +61,9 @@ export default function AsciiField({ className = "ascii-field" }: { className?: 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // Low-opacity (0.32), masked ambient backdrop — a slightly softer raster
+    // isn't noticeable, and it's less area for clearRect/compositing to push.
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     let W = 0;
     let H = 0;
     let cols = 0;
@@ -57,6 +75,14 @@ export default function AsciiField({ className = "ascii-field" }: { className?: 
     let V = new Float32Array(0);
     let U2 = new Float32Array(0);
     let V2 = new Float32Array(0);
+
+    // Reusable per-glyph-bucket scratch buffers (cell grid-index lists),
+    // reset with `.length = 0` each frame instead of reallocated — draw()
+    // fills these in one pass, then draws bucket-by-bucket so each of the 11
+    // possible fillStyle values is set at most once per frame instead of once
+    // per cell (Canvas2D state changes aren't free, and there can be
+    // thousands of cells).
+    const buckets: number[][] = Array.from({ length: RAMP.length }, () => []);
 
     const setFont = () => {
       ctx.font = `${FONT_PX}px "SFMono-Regular", "JetBrains Mono", ui-monospace, monospace`;
@@ -141,16 +167,28 @@ export default function AsciiField({ className = "ascii-field" }: { className?: 
 
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
-      const last = RAMP.length - 1;
+      for (const b of buckets) b.length = 0;
       for (let y = 0; y < rows; y++) {
+        const rowBase = y * cols;
         for (let x = 0; x < cols; x++) {
-          const v = V[y * cols + x];
+          const v = V[rowBase + x];
           const n = v * 2.8; // → ~[0,1] for the "moving" regime
           if (n < FUR_FLOOR) continue; // empty fur → leave the backdrop bare (cheap)
           const nn = n > 1 ? 1 : n;
-          const gi = (nn * last) | 0;
-          ctx.fillStyle = cheetah(nn);
-          ctx.fillText(RAMP[gi], x * charW, y * rowH);
+          const gi = (nn * RAMP_LAST) | 0;
+          buckets[gi].push(rowBase + x);
+        }
+      }
+      for (let gi = 0; gi < buckets.length; gi++) {
+        const cells = buckets[gi];
+        if (!cells.length) continue;
+        ctx.fillStyle = PALETTE[gi];
+        const glyph = RAMP[gi];
+        for (let k = 0; k < cells.length; k++) {
+          const idx = cells[k];
+          const x = idx % cols;
+          const y = (idx / cols) | 0;
+          ctx.fillText(glyph, x * charW, y * rowH);
         }
       }
     };

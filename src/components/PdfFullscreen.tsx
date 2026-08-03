@@ -17,9 +17,16 @@ const clampZoom = (z: number) => Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, z));
  *
  * Zoom is decoupled from rendering: each page is rasterised once at a fixed
  * high-quality scale (fit-width × QUALITY × dpr), and the zoom control just
- * applies the CSS `zoom` property to the page column. That makes zooming smooth
- * and flicker-free (no re-render, no scroll jumps) while staying crisp up to
- * ~QUALITY×. Esc closes it.
+ * applies a compositor-only `transform: scale()` (+ fixed top-left
+ * `transform-origin`) to the page column — no reflow, no separate "preview
+ * vs. commit" mechanism (that split was the actual bug: previewing via
+ * transform on one element then committing via the CSS `zoom` property on a
+ * *different* element, re-measured from scratch, meant the two phases used
+ * incompatible math and visibly jumped at the hand-off). Anchor-under-cursor
+ * math is entirely arithmetic — cached layout geometry (measured once, after
+ * render) plus cheap scrollLeft/scrollTop reads — no `getBoundingClientRect()`
+ * in the per-frame gesture path, so zooming never forces a synchronous layout
+ * flush. Esc closes it.
  */
 export default function PdfFullscreen({
   url,
@@ -32,13 +39,23 @@ export default function PdfFullscreen({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const pagesRef = useRef<HTMLDivElement>(null);
-  const layerRef = useRef<HTMLDivElement>(null); // GPU transform preview during gestures
+  const layerRef = useRef<HTMLDivElement>(null); // carries the zoom transform
   const docRef = useRef<PDFDocumentProxy | null>(null);
   const renderToken = useRef(0);
   const tasks = useRef<RenderTask[]>([]);
   const naturalWidth = useRef(0);
   const fitScale = useRef(1); // pdf.js scale at which a page fits the column
   const zoomRef = useRef(1); // latest zoom (for gesture math without re-subscribing)
+  // Fixed layout geometry for the zoom-anchor math, measured once (after each
+  // render — initial load and window-resize refits) rather than re-measured
+  // per gesture frame. scrollerLeft/Top: the scroller's own screen position
+  // (stable — `.pdffs` is position:fixed over the whole viewport). layerOrigin
+  // X/Y: the zoom layer's own (unscaled) offset from the scrollable content's
+  // origin — a pure layout fact, unaffected by `transform` or scroll position.
+  const scrollerLeft = useRef(0);
+  const scrollerTop = useRef(0);
+  const layerOriginX = useRef(0);
+  const layerOriginY = useRef(0);
 
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [numPages, setNumPages] = useState(0);
@@ -64,28 +81,53 @@ export default function PdfFullscreen({
     return naturalWidth.current ? avail / naturalWidth.current : 1;
   };
 
-  // Set the CSS zoom to `target`, keeping the content point under (clientX,
-  // clientY) fixed — i.e. zoom toward the cursor / pinch midpoint. We anchor
-  // against the pages element's *actual* rects: record where the cursor sits as
-  // a fraction of the pages box, apply the zoom, then nudge scroll so that same
-  // fraction lands back under the cursor. Reading real geometry keeps it correct
-  // regardless of the scroller's padding and the column's horizontal centering
-  // (the earlier closed-form math ignored the padding and drifted diagonally).
+  // Re-measures the fixed layout geometry the zoom math depends on. Called
+  // once after layout is actually stable (end of `render()`), not per
+  // gesture frame — scrollerLeft/Top and layerOriginX/Y don't change from
+  // scrolling or zooming, only from the page column's own layout changing
+  // (initial load, window resize).
+  const measureZoomGeometry = () => {
+    const scroller = scrollRef.current;
+    const layer = layerRef.current;
+    if (!scroller || !layer) return;
+    const scrollerRect = scroller.getBoundingClientRect();
+    const layerRect = layer.getBoundingClientRect();
+    scrollerLeft.current = scrollerRect.left;
+    scrollerTop.current = scrollerRect.top;
+    layerOriginX.current = scroller.scrollLeft + (layerRect.left - scrollerRect.left);
+    layerOriginY.current = scroller.scrollTop + (layerRect.top - scrollerRect.top);
+  };
+
+  // Zoom to `target`, keeping the content point under (clientX, clientY)
+  // fixed — i.e. zoom toward the cursor / pinch midpoint. Entirely arithmetic:
+  // convert the cursor's screen position to a position within the scrollable
+  // *content* (scrollLeft + offset from the scroller's — stable — own screen
+  // position), subtract the zoom layer's fixed content-space offset to get a
+  // local coordinate in the layer's own unscaled space (this is exactly what
+  // `transform-origin: 0 0`, fixed in CSS and never touched here, scales
+  // around), rescale that local point, then solve for the scrollLeft/Top that
+  // puts it back under the cursor. No `getBoundingClientRect()` here at all —
+  // just cheap property reads — so this is safe to call on every gesture
+  // frame without forcing layout.
   const applyZoom = useCallback((target: number, clientX: number, clientY: number) => {
     const scroller = scrollRef.current;
-    const pages = pagesRef.current;
-    if (!scroller || !pages) return;
+    const layer = layerRef.current;
+    if (!scroller || !layer) return;
     const z1 = clampZoom(target);
     const z0 = zoomRef.current;
     if (z1 === z0) return;
-    const before = pages.getBoundingClientRect();
-    const fx = before.width ? (clientX - before.left) / before.width : 0;
-    const fy = before.height ? (clientY - before.top) / before.height : 0;
-    pages.style.setProperty("zoom", String(z1));
+    const cursorInScrollerX = clientX - scrollerLeft.current;
+    const cursorInScrollerY = clientY - scrollerTop.current;
+    const contentX = scroller.scrollLeft + cursorInScrollerX;
+    const contentY = scroller.scrollTop + cursorInScrollerY;
+    const localX = (contentX - layerOriginX.current) / z0;
+    const localY = (contentY - layerOriginY.current) / z0;
+    layer.style.transform = `scale(${z1})`;
     zoomRef.current = z1;
-    const after = pages.getBoundingClientRect(); // reflects the new zoom
-    scroller.scrollLeft += after.left + fx * after.width - clientX;
-    scroller.scrollTop += after.top + fy * after.height - clientY;
+    const newContentX = layerOriginX.current + localX * z1;
+    const newContentY = layerOriginY.current + localY * z1;
+    scroller.scrollLeft = newContentX - cursorInScrollerX;
+    scroller.scrollTop = newContentY - cursorInScrollerY;
   }, []);
 
   // Rasterise every page once at fit-width × QUALITY (× dpr). Not called on
@@ -166,6 +208,16 @@ export default function PdfFullscreen({
         /* cancelled on re-render/unmount */
       }
     }
+    if (token !== renderToken.current) return;
+    // Layout is stable now (all pages exist at their final size) — (re)apply
+    // the current zoom transform and refresh the geometry applyZoom depends
+    // on. Covers both the initial load and a window-resize refit in one
+    // place; resize intentionally preserves whatever zoom level the visitor
+    // had, so this re-applies zoomRef.current rather than resetting it.
+    if (layerRef.current) {
+      layerRef.current.style.transform = `scale(${zoomRef.current})`;
+    }
+    measureZoomGeometry();
   }, []);
 
   // Load the document + compute the fit scale, then render once.
@@ -219,11 +271,6 @@ export default function PdfFullscreen({
     };
   }, [render]);
 
-  // Apply the initial zoom once the pages exist.
-  useEffect(() => {
-    if (status === "ready") pagesRef.current?.style.setProperty("zoom", String(zoomRef.current));
-  }, [status]);
-
   // Esc to close; lock body scroll while the overlay is open.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -242,72 +289,49 @@ export default function PdfFullscreen({
     };
   }, [onClose]);
 
-  // Pinch (touch) and ctrl-wheel (trackpad) zoom. While the gesture is live we
-  // preview with a cheap GPU `transform: scale()` on the zoom layer (no relayout
-  // → smooth), and only commit the real CSS zoom (+ scroll re-anchor) when it
-  // ends. Committing zooms toward the gesture anchor (midpoint / cursor).
+  // Pinch (touch) and ctrl-wheel (trackpad) zoom. `applyZoom` is cheap
+  // (arithmetic + a compositor-only transform, no layout reads or reflow) so
+  // it runs live on every gesture step — one consistent mechanism for the
+  // whole gesture, no separate preview/commit phases to fall out of sync.
+  // `setZoom` (the React state driving the % label) is still deferred to the
+  // end of the gesture so we're not re-rendering on every touchmove/wheel tick.
   useEffect(() => {
     const scroller = scrollRef.current;
-    const layer = layerRef.current;
-    if (!scroller || !layer) return;
+    if (!scroller) return;
     let pinching = false;
     let startDist = 0;
-    let commitZoom = 1;
-    let liveTarget = 1;
-    let anchorX = 0;
-    let anchorY = 0;
+    let gestureZoom = 1; // zoomRef.current as of gesture start
     let wheelTimer = 0;
     const dist = (t: TouchList) =>
       Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
-
-    const beginPreview = (clientX: number, clientY: number) => {
-      commitZoom = zoomRef.current;
-      liveTarget = commitZoom;
-      anchorX = clientX;
-      anchorY = clientY;
-      const rect = layer.getBoundingClientRect();
-      layer.style.transformOrigin = `${clientX - rect.left}px ${clientY - rect.top}px`;
-    };
-    const preview = (target: number) => {
-      liveTarget = clampZoom(target);
-      layer.style.transform = `scale(${liveTarget / commitZoom})`;
-    };
-    const commit = () => {
-      layer.style.transform = "";
-      layer.style.transformOrigin = "";
-      applyZoom(liveTarget, anchorX, anchorY); // sets real zoom + re-anchors scroll
-      setZoom(zoomRef.current);
-    };
 
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length !== 2) return;
       pinching = true;
       startDist = dist(e.touches);
-      beginPreview(
-        (e.touches[0].clientX + e.touches[1].clientX) / 2,
-        (e.touches[0].clientY + e.touches[1].clientY) / 2,
-      );
+      gestureZoom = zoomRef.current;
     };
     const onTouchMove = (e: TouchEvent) => {
       if (!pinching || e.touches.length !== 2) return;
       e.preventDefault(); // suppress native scroll/zoom mid-pinch
-      preview(commitZoom * (dist(e.touches) / (startDist || 1)));
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      applyZoom(gestureZoom * (dist(e.touches) / (startDist || 1)), midX, midY);
     };
     const onTouchEnd = () => {
       if (!pinching) return;
       pinching = false;
-      commit();
+      setZoom(zoomRef.current);
     };
     const onWheel = (e: WheelEvent) => {
       if (!e.ctrlKey) return; // plain scroll passes through; ctrl = trackpad pinch
       e.preventDefault();
       if (pinching) return;
-      if (!wheelTimer) beginPreview(e.clientX, e.clientY);
-      preview(liveTarget * Math.exp(-e.deltaY * 0.01));
+      applyZoom(zoomRef.current * Math.exp(-e.deltaY * 0.01), e.clientX, e.clientY);
       window.clearTimeout(wheelTimer);
       wheelTimer = window.setTimeout(() => {
         wheelTimer = 0;
-        commit();
+        setZoom(zoomRef.current);
       }, 150);
     };
 
@@ -326,7 +350,7 @@ export default function PdfFullscreen({
     };
   }, [applyZoom]);
 
-  // Which page is under the viewport middle (robust to CSS zoom via rects).
+  // Which page is under the viewport middle (rects reflect the zoom transform).
   const onScroll = () => {
     const scroller = scrollRef.current;
     const container = pagesRef.current;
@@ -350,7 +374,7 @@ export default function PdfFullscreen({
     setZoom(zoomRef.current);
   };
   const resetFit = () => {
-    pagesRef.current?.style.setProperty("zoom", "1");
+    if (layerRef.current) layerRef.current.style.transform = "scale(1)";
     zoomRef.current = 1;
     setZoom(1);
     scrollRef.current?.scrollTo({ top: 0, left: 0 });
