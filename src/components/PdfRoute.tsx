@@ -3,7 +3,39 @@ import { useNavigate } from "react-router-dom";
 import ErrorBoundary from "./ErrorBoundary";
 
 // pdfjs is heavy — keep it in its own chunk, only fetched when a PDF opens.
-const PdfFullscreen = lazy(() => import("./PdfFullscreen"));
+//
+// A stale cached bundle from *before* a redeploy can reference a chunk
+// filename (content-hashed) that the *current* deploy no longer has —
+// "Importing a module script failed" / a 404 on PdfFullscreen-*.js. GitHub
+// Pages' CDN can take a while to fully converge after a deploy, so a visitor
+// can transiently land on a mismatched index.html + chunk pairing. The fix is
+// a self-healing reload: on the first such failure this session, do one full
+// page reload to fetch the current (consistent) asset manifest.
+const RELOAD_FLAG = "pdf-chunk-reload";
+const PdfFullscreen = lazy(() =>
+  import("./PdfFullscreen")
+    .then((mod) => {
+      try {
+        sessionStorage.removeItem(RELOAD_FLAG);
+      } catch {
+        // ignore (private browsing / storage disabled)
+      }
+      return mod;
+    })
+    .catch((err) => {
+      try {
+        if (!sessionStorage.getItem(RELOAD_FLAG)) {
+          sessionStorage.setItem(RELOAD_FLAG, "1");
+          window.location.reload();
+          // reload is in flight; nothing else here will actually run/render
+          return new Promise<never>(() => {});
+        }
+      } catch {
+        // storage unavailable — fall through to the error boundary below
+      }
+      throw err;
+    }),
+);
 
 function PdfErrorFallback({ onClose }: { onClose: () => void }) {
   return (
