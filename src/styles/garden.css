@@ -523,6 +523,10 @@
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
+/* the CSS `zoom` property is applied directly here (PdfFullscreen's
+   applyZoom) — a real layout scale, not a compositor transform, so the
+   browser computes scrollable range, centering, and canvas resampling the
+   normal way in every engine. */
 .pdffs-pages {
   display: flex;
   flex-direction: column;
@@ -538,25 +542,6 @@
   min-width: 4ch;
   text-align: center;
   color: var(--ink);
-}
-/* wraps the page column; carries the zoom `transform: scale()` (compositor-
-   only, no reflow). Deliberately NOT shrink-wrapped (`width: fit-content`) —
-   that was tried, twice, and both times produced exactly this bug in Safari:
-   the PDF clipped at the top and/or a slab of empty space appeared below it,
-   plus zoom-anchor drift for the whole gesture (not just at one moment) — a
-   reproducible Safari quirk where a shrink-wrapped + transformed element
-   inside a scrollable ancestor miscomputes the resulting scrollable range
-   (and, since PdfFullscreen's applyZoom caches this element's geometry once,
-   a wrong reading there corrupts the anchor math for the entire gesture, not
-   just one frame). Full-width (matching the scroller, page centred *inside*
-   via `.pdffs-pages`'s `align-items: center`) composites a bit more but is
-   the version that's actually correct.
-   transform-origin is pinned at the top-left corner and never changed — the
-   zoom-anchor math in PdfFullscreen's applyZoom is built around that fixed
-   point. */
-.pdf-zoomlayer {
-  transform-origin: 0 0;
-  will-change: transform;
 }
 .pdf-page-wrap {
   position: relative; /* anchors the clickable link overlay */
