@@ -5,7 +5,6 @@ tags: [thought, life, world models, simulations]
 summary: The universe is likely simulated, so write an interesting story.
 ---
 
-[[World Models]] \
 [[Rick&Morty Infinite Worlds]]
 
 The importance of creating a world model, that is identical to our world is crucial to us. If we create such a model, it will have to be completely identical to ours, with no way to distinguish one from the other. It must have an entire simulated universe, left unexplored, much like ours. It must have the diversity and the elements crucial for carbon life to exist. And life must emerge, not programmed to exist. \

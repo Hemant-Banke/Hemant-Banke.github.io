@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import Nav from "./components/Nav";
 import Footer from "./components/Footer";
-import ThemeToggle from "./components/ThemeToggle";
+import FloatingDock from "./components/FloatingDock";
 import Home from "./pages/Home";
 import Garden from "./pages/Garden";
 import Curated from "./pages/Curated";
@@ -41,7 +41,7 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
-      <ThemeToggle />
+      <FloatingDock />
     </>
   );
 }

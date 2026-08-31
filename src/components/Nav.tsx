@@ -6,8 +6,8 @@ const links = [
   { to: "/", label: "home", end: true },
   { to: "/digital-garden", label: "garden" },
   { to: "/curated", label: "curated" },
-  { to: "/projects", label: "projects" },
   { to: "/research", label: "research" },
+  { to: "/projects", label: "projects" },
   { to: "/resume", label: "resume" },
 ];
 
@@ -19,13 +19,6 @@ export default function Nav() {
       <div className="layout nav-row">
         <NavLink to="/" className="nav-brand" end onClick={() => setOpen(false)}>
           <span className="accent-green">{site.handle}</span>
-          <span className="dim">@portfolio</span>
-          <span className="dim">:</span>
-          <span className="accent-cyan">~</span>
-          <span className="accent-green">$</span>
-          <span className="blink" aria-hidden="true">
-            █
-          </span>
         </NavLink>
 
         <button

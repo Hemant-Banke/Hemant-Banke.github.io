@@ -41,9 +41,8 @@ function PdfErrorFallback({ onClose }: { onClose: () => void }) {
   return (
     <div className="page layout">
       <div className="section-head">
-        <span className="hash">##</span>
         <h1>
-          <span className="path">~/pdf</span>
+          <span className="path">pdf</span>
         </h1>
       </div>
       <p className="lead dim">

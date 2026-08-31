@@ -16,6 +16,36 @@ export function useReducedMotion(): boolean {
   return reduced;
 }
 
+/**
+ * Drives an animation loop only while `el` is on screen and the tab is in the
+ * foreground. Returns a teardown that also stops the loop.
+ */
+export function whileVisible(
+  el: Element,
+  start: () => void,
+  stop: () => void,
+): () => void {
+  let onScreen = false;
+  const sync = () => {
+    if (onScreen && document.visibilityState === "visible") start();
+    else stop();
+  };
+  const io = new IntersectionObserver(
+    ([e]) => {
+      onScreen = e.isIntersecting;
+      sync();
+    },
+    { threshold: 0 },
+  );
+  io.observe(el);
+  document.addEventListener("visibilitychange", sync);
+  return () => {
+    io.disconnect();
+    document.removeEventListener("visibilitychange", sync);
+    stop();
+  };
+}
+
 /** Tracks whether the viewport is at/under `px` wide (default 720). */
 export function useIsNarrow(px = 720): boolean {
   const [narrow, setNarrow] = useState(

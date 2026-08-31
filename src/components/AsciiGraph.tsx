@@ -10,7 +10,7 @@ import {
   forceY,
   type Simulation,
 } from "d3-force";
-import type { GraphEdge, GraphNode } from "../content/types";
+import type { GraphEdge, GraphNode, GraphPositions } from "../content/types";
 import { useReducedMotion } from "../lib/hooks";
 
 interface SimNode extends GraphNode {
@@ -29,11 +29,30 @@ interface SimLink {
 
 const nid = (n: SimNode | string) => (typeof n === "string" ? n : n.id);
 
+// Long note titles are elided rather than drawn in full — full text is still in
+// the hover tip. Mirrored in plugins/graph-layout.mjs, which sizes the baked
+// collision radii off the same width.
+const MAX_LABEL = 14;
+const short = (s: string) =>
+  s.length > MAX_LABEL ? s.slice(0, MAX_LABEL - 1) + "…" : s;
+
+// Note titles fade in as you zoom toward them; zoomed out, the graph reads as
+// shape (dots, groups, edges) rather than a wall of 8px type. Group labels are
+// the map's anchors, so they hold on longer.
+const noteLabelAlpha = (k: number) =>
+  Math.max(0, Math.min(1, (k - 0.42) / 0.28));
+const groupLabelAlpha = (k: number) =>
+  Math.max(0, Math.min(1, (k - 0.1) / 0.1));
+
 /**
  * Force-directed knowledge graph drawn entirely in monospace glyphs on a
  * canvas. Group nodes render as box-drawn labels, notes as bulleted labels,
  * edges as stippled ascii lines. Drag to pan, scroll to zoom, hover to trace
  * neighbours, click a note to open it.
+ *
+ * Positions normally arrive pre-baked from plugins/graph-layout.mjs, so the
+ * graph paints settled on the first frame and no simulation runs on load; the
+ * sim only spins back up while you drag a node.
  */
 export default function AsciiGraph({
   nodes: rawNodes,
@@ -41,12 +60,18 @@ export default function AsciiGraph({
   height = 560,
   focusId,
   mini = false,
+  initialZoom,
+  positions,
 }: {
   nodes: GraphNode[];
   edges: GraphEdge[];
   height?: number;
   focusId?: string;
   mini?: boolean;
+  // Starting zoom while the sim settles. Ignored when `positions` is given.
+  initialZoom?: number;
+  // Pre-baked world-space node positions, `{ id: [x, y] }`.
+  positions?: GraphPositions;
 }) {
   const navigate = useNavigate();
   const reduced = useReducedMotion();
@@ -114,7 +139,7 @@ export default function AsciiGraph({
       return out;
     };
 
-    const view = { x: 0, y: 0, k: mini ? 0.85 : 1 };
+    const view = { x: 0, y: 0, k: initialZoom ?? (mini ? 0.85 : 1) };
     let hover: string | null = null;
     let selected: string | null = focusId ?? null;
     const rects: { id: string; x0: number; y0: number; x1: number; y1: number }[] =
@@ -136,50 +161,57 @@ export default function AsciiGraph({
     view.x = W / 2;
     view.y = H / 2;
 
-    // seed positions on a loose circle for a pleasant settle
-    nodes.forEach((n, i) => {
-      const a = (i / nodes.length) * Math.PI * 2;
-      const r = 40 + (n.type === "group" ? 0 : 90);
-      n.x = Math.cos(a) * r;
-      n.y = Math.sin(a) * r;
-    });
+    // Every node must be covered, or stragglers sit at the origin.
+    const baked =
+      positions && nodes.every((n) => positions[n.id]) ? positions : null;
 
-    const linkDist = (l: SimLink) =>
-      l.kind === "contains" ? 70 : l.kind === "subgroup" ? 95 : 150;
+    if (baked) {
+      for (const n of nodes) {
+        const [x, y] = baked[n.id];
+        n.x = x;
+        n.y = y;
+      }
+    } else {
+      // seed positions on a loose circle for a pleasant settle
+      nodes.forEach((n, i) => {
+        const a = (i / nodes.length) * Math.PI * 2;
+        const r = 40 + (n.type === "group" ? 0 : 90);
+        n.x = Math.cos(a) * r;
+        n.y = Math.sin(a) * r;
+      });
+    }
 
-    // Collide radius scales with label width so long titles don't overlap.
-    const collideR = (d: SimNode) => {
-      const chars = d.label.length + (d.type === "group" ? 4 : 2);
-      return Math.max(d.type === "group" ? 40 : 26, chars * 3.4);
-    };
+    // Mirrors plugins/graph-layout.mjs — a drag has to relax into the same
+    // round arrangement the baked layout came from.
+    const LINK_DISTANCE = 58;
+    const CHARGE = -220;
+    const DISTANCE_MAX = 300;
+    const CENTER_PULL = 0.09;
+    const collideR = (d: SimNode) =>
+      (d.type === "group" ? 30 : 14) + Math.min(d.degree ?? 0, 10) * 1.6;
 
     const sim: Simulation<SimNode, SimLink> = forceSimulation(nodes)
       .force(
         "link",
         forceLink<SimNode, SimLink>(links)
           .id((d) => d.id)
-          .distance(linkDist)
-          .strength((l) => (l.kind === "contains" ? 0.9 : 0.3)),
+          .distance(LINK_DISTANCE)
+          .strength((l) => (l.kind === "contains" ? 0.68 : 0.34)),
       )
-      .force("charge", forceManyBody().strength(mini ? -320 : -560))
+      .force(
+        "charge",
+        forceManyBody<SimNode>().strength(CHARGE).distanceMax(DISTANCE_MAX),
+      )
       .force("center", forceCenter(0, 0))
-      .force("collide", forceCollide<SimNode>(collideR).iterations(2))
-      .force("x", forceX(0).strength(0.05))
-      .force("y", forceY(0).strength(0.05));
+      .force("collide", forceCollide<SimNode>(collideR).iterations(3))
+      .force("x", forceX(0).strength(CENTER_PULL))
+      .force("y", forceY(0).strength(CENTER_PULL));
 
     const FONT = mini ? 12 : 13;
 
-    const glyphForAngle = (a: number) => {
-      const d = ((a % Math.PI) + Math.PI) % Math.PI;
-      if (d < Math.PI / 8 || d > (7 * Math.PI) / 8) return "─";
-      if (d < (3 * Math.PI) / 8) return "╱"; // canvas y-down: this reads correctly
-      if (d < (5 * Math.PI) / 8) return "│";
-      return "╲";
-    };
-
     const draw = () => {
       const k = view.k;
-      const fs = Math.max(9, Math.min(FONT * k, mini ? 15 : 20));
+      const fs = Math.max(8, Math.min(FONT * k, mini ? 11 : 12));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
       ctx.font = `${fs}px "JetBrains Mono", monospace`;
@@ -193,30 +225,25 @@ export default function AsciiGraph({
         adj.get(active)?.forEach((n) => lit.add(n));
       }
       const isDim = (id: string) => active !== null && !lit.has(id);
+      const nAlpha = noteLabelAlpha(k);
+      const gAlpha = groupLabelAlpha(k);
       const proj = (n: SimNode) => [n.x * k + view.x, n.y * k + view.y] as const;
 
-      // ---- edges (stippled ascii) ----
-      ctx.textAlign = "center";
+      // ---- edges ----
+      ctx.lineWidth = 1;
       for (const l of links) {
         const s = l.source as SimNode;
         const t = l.target as SimNode;
         const [x0, y0] = proj(s);
         const [x1, y1] = proj(t);
-        const dx = x1 - x0;
-        const dy = y1 - y0;
-        const len = Math.hypot(dx, dy);
-        const ang = Math.atan2(dy, dx);
-        const g = glyphForAngle(ang);
         const incident = active && (nid(l.source) === active || nid(l.target) === active);
         const dim = active && !incident;
-        ctx.globalAlpha = dim ? 0.06 : incident ? 0.9 : 0.32;
-        ctx.fillStyle = edgeColor(l.kind === "link" ? t.color : s.color);
-        const step = Math.max(cw * 0.9, 6);
-        for (let d = step; d < len - step; d += step) {
-          const px = x0 + (dx * d) / len;
-          const py = y0 + (dy * d) / len;
-          ctx.fillText(g, px, py);
-        }
+        ctx.globalAlpha = dim ? 0.07 : incident ? 0.85 : 0.3;
+        ctx.strokeStyle = edgeColor(l.kind === "link" ? t.color : s.color);
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.stroke();
       }
 
       // ---- nodes ----
@@ -227,8 +254,9 @@ export default function AsciiGraph({
         ctx.globalAlpha = dim ? 0.22 : 1;
 
         if (n.type === "group") {
-          const inner = ` ${n.label} `;
+          const inner = ` ${short(n.label)} `;
           ctx.textAlign = "left";
+          ctx.globalAlpha = (dim ? 0.22 : 1) * gAlpha;
           ctx.fillStyle = n.color;
           const boxW = (inner.length + 2) * cw;
           const x0 = x - boxW / 2;
@@ -244,15 +272,25 @@ export default function AsciiGraph({
           rects.push({ id: n.id, x0, y0: y - fs * 1.5, x1: x0 + boxW, y1: y + fs * 1.5 });
         } else {
           ctx.textAlign = "left";
-          const label = n.label;
-          const dotW = cw * 1.4;
-          const totalW = dotW + label.length * cw;
+          const label = short(n.label);
+          // Well-connected notes read as bigger dots.
+          const dotScale = 1 + Math.min(n.degree ?? 0, 10) * 0.05;
+          const dotW = cw * 1.4 * dotScale;
+          const totalW = dotW + (nAlpha > 0 ? label.length * cw : 0);
           const x0 = x - totalW / 2;
           // starred notes get an amber ★ instead of the group-coloured bullet
           ctx.fillStyle = n.star ? themeColors.star : n.color;
+          ctx.font = `${fs * dotScale}px "JetBrains Mono", monospace`;
           ctx.fillText(n.star ? "★" : "●", x0, y);
-          ctx.fillStyle = active === n.id ? themeColors.active : dim ? themeColors.dim : themeColors.ink;
-          ctx.fillText(label, x0 + dotW, y);
+          ctx.font = `${fs}px "JetBrains Mono", monospace`;
+          if (nAlpha > 0) {
+            ctx.globalAlpha = (dim ? 0.22 : 1) * nAlpha;
+            ctx.fillStyle =
+              active === n.id ? themeColors.active : dim ? themeColors.dim : themeColors.ink;
+            ctx.fillText(label, x0 + dotW, y);
+          }
+          // Hit area covers only what's actually drawn, so an invisible label
+          // never swallows hovers.
           rects.push({
             id: n.id,
             x0,
@@ -265,31 +303,40 @@ export default function AsciiGraph({
       ctx.globalAlpha = 1;
     };
 
+    // Pointer events fire faster than the screen refreshes, so interaction
+    // coalesces into at most one redraw per frame instead of one per event.
+    let drawQueued = 0;
+    const requestDraw = () => {
+      if (drawQueued) return;
+      drawQueued = requestAnimationFrame(() => {
+        drawQueued = 0;
+        draw();
+      });
+    };
+
     // Frame the whole graph once it settles: measure label extents in world
     // space and pick a zoom/pan that fits with margin.
     let fitted = false;
     const fitView = () => {
       if (!nodes.length) return;
-      ctx.font = `${FONT}px "JetBrains Mono", monospace`;
-      const cw = ctx.measureText("M").width;
       let minX = Infinity,
         minY = Infinity,
         maxX = -Infinity,
         maxY = -Infinity;
+      // Frame the blob by its node radii, not its label widths: labels are
+      // fixed-size screen text, so letting them drive the fit stretches the
+      // view horizontally and undoes the circular layout.
       for (const n of nodes) {
-        const halfW =
-          n.type === "group"
-            ? ((n.label.length + 4) * cw) / 2
-            : (n.label.length * cw + cw * 1.4) / 2;
-        const halfH = n.type === "group" ? FONT * 1.8 : FONT;
-        minX = Math.min(minX, n.x - halfW);
-        maxX = Math.max(maxX, n.x + halfW);
-        minY = Math.min(minY, n.y - halfH);
-        maxY = Math.max(maxY, n.y + halfH);
+        const r = collideR(n);
+        minX = Math.min(minX, n.x - r);
+        maxX = Math.max(maxX, n.x + r);
+        minY = Math.min(minY, n.y - r);
+        maxY = Math.max(maxY, n.y + r);
       }
       const spanX = Math.max(1, maxX - minX);
       const spanY = Math.max(1, maxY - minY);
-      const k = Math.min(W / spanX, H / spanY, mini ? 1.1 : 1.35) * 0.9;
+
+      const k = Math.min(W / spanX, H / spanY, mini ? 1.1 : 1.35) * 0.85;
       view.k = Math.max(0.2, k);
       view.x = W / 2 - ((minX + maxX) / 2) * view.k;
       view.y = H / 2 - ((minY + maxY) / 2) * view.k;
@@ -306,9 +353,16 @@ export default function AsciiGraph({
       draw();
     });
 
-    if (reduced) {
+    if (baked) {
+      // Already settled at build time; a drag restarts the sim.
+      sim.stop();
+      fitted = true;
+      fitView();
+      draw();
+    } else if (reduced) {
       sim.stop();
       sim.tick(300);
+      fitted = true;
       fitView();
       draw();
     } else {
@@ -346,7 +400,7 @@ export default function AsciiGraph({
       view.k = Math.min(3, Math.max(0.3, view.k * factor));
       view.x = mx - wx * view.k;
       view.y = my - wy * view.k;
-      draw();
+      requestDraw();
     };
     const pinchDistance = () => {
       const [a, b] = [...pointers.values()];
@@ -404,12 +458,12 @@ export default function AsciiGraph({
         const [wx, wy] = toWorld(p.x, p.y);
         dragNode.fx = wx;
         dragNode.fy = wy;
-        if (reduced) draw();
+        if (reduced) requestDraw();
       } else if (panning) {
         view.x += p.x - last.x;
         view.y += p.y - last.y;
         last = p;
-        draw();
+        requestDraw();
       } else {
         const id = hit(p.x, p.y);
         if (id !== hover) {
@@ -417,7 +471,7 @@ export default function AsciiGraph({
           const n = id ? nodes.find((nn) => nn.id === id) : null;
           setHoverLabel(n ? `${n.type === "group" ? "group " : ""}${n.label}` : null);
           canvas.style.cursor = id ? "pointer" : "grab";
-          draw();
+          requestDraw();
         }
       }
     };
@@ -428,7 +482,7 @@ export default function AsciiGraph({
       if (pointers.size < 2) pinchDist = 0;
       // Still mid-gesture (a finger remains, or we were pinching) — not a click.
       if (wasPinching || pointers.size >= 1) {
-        draw();
+        requestDraw();
         return;
       }
       if (dragNode) {
@@ -445,7 +499,7 @@ export default function AsciiGraph({
         selected = null; // click empty space clears selection
       }
       panning = false;
-      draw();
+      requestDraw();
     };
     const onCancel = (e: PointerEvent) => {
       pointers.delete(e.pointerId);
@@ -478,12 +532,13 @@ export default function AsciiGraph({
     canvas.addEventListener("wheel", onWheel, { passive: false });
     const ro = new ResizeObserver(() => {
       resize();
-      draw();
+      requestDraw();
     });
     ro.observe(canvas.parentElement!);
 
     return () => {
       sim.stop();
+      cancelAnimationFrame(drawQueued);
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerup", onUp);
@@ -492,7 +547,18 @@ export default function AsciiGraph({
       ro.disconnect();
       window.removeEventListener("themechange", onThemeChange);
     };
-  }, [nodes, links, adj, height, reduced, navigate, focusId, mini]);
+  }, [
+    nodes,
+    links,
+    adj,
+    height,
+    reduced,
+    navigate,
+    focusId,
+    mini,
+    initialZoom,
+    positions,
+  ]);
 
   return (
     <div className="graph-wrap" style={{ height }}>

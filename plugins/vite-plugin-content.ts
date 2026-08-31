@@ -1,31 +1,31 @@
 import path from "node:path";
 import type { Plugin } from "vite";
 // Logic lives in plain JS so the same code powers the build prestep + CI.
-import { writeManifest } from "./content-core.mjs";
+import { writeContent } from "./content-core.mjs";
 
 /**
- * Scans digital-garden/ into src/generated/manifest.json on server start and rebuilds it
- * (with a full page reload) whenever a note changes.
+ * Scans digital-garden/ into src/generated/{manifest,layouts}.json on server
+ * start and rebuilds both (with a full page reload) whenever a note changes.
  */
 export default function contentPlugin(): Plugin {
   let gardenDir = "";
-  let outFile = "";
+  let outDir = "";
 
   return {
     name: "vite-plugin-content",
     async configResolved(config) {
       gardenDir = path.resolve(config.root, "digital-garden");
-      outFile = path.resolve(config.root, "src/generated/manifest.json");
-      await writeManifest(gardenDir, outFile);
+      outDir = path.resolve(config.root, "src/generated");
+      await writeContent(gardenDir, outDir);
     },
     configureServer(server) {
       server.watcher.add(gardenDir);
       const onChange = async (file: string) => {
         if (!file.startsWith(gardenDir)) return;
         try {
-          await writeManifest(gardenDir, outFile);
+          await writeContent(gardenDir, outDir);
           server.ws.send({ type: "full-reload" });
-          server.config.logger.info("  content manifest rebuilt");
+          server.config.logger.info("  content manifest + graph layouts rebuilt");
         } catch (err) {
           server.config.logger.error(String(err));
         }

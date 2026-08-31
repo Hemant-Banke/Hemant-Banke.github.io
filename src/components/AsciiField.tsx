@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useReducedMotion } from "../lib/hooks";
+import { useReducedMotion, whileVisible } from "../lib/hooks";
 
 // Gray-Scott reaction-diffusion sampled on a character grid and drawn as
 // density-ramped ASCII glyphs. Two virtual chemicals (U, V) diffuse and react
@@ -197,6 +197,7 @@ export default function AsciiField({ className = "ascii-field" }: { className?: 
 
     let raf = 0;
     let sinceSeed = 0;
+    let release: (() => void) | null = null;
     if (reduced) {
       for (let i = 0; i < 600; i++) step(); // settle to a rich static frame
       draw();
@@ -216,7 +217,18 @@ export default function AsciiField({ className = "ascii-field" }: { className?: 
         }
         raf = requestAnimationFrame(loop);
       };
-      raf = requestAnimationFrame(loop);
+      release = whileVisible(
+        canvas,
+        () => {
+          if (!raf) raf = requestAnimationFrame(loop);
+        },
+        () => {
+          if (raf) {
+            cancelAnimationFrame(raf);
+            raf = 0;
+          }
+        },
+      );
     }
 
     const ro = new ResizeObserver(() => {
@@ -230,6 +242,7 @@ export default function AsciiField({ className = "ascii-field" }: { className?: 
 
     return () => {
       cancelAnimationFrame(raf);
+      release?.();
       ro.disconnect();
     };
   }, [reduced, className]);

@@ -13,9 +13,8 @@ export default function Resume() {
     return (
       <div className="page layout">
         <div className="section-head">
-          <span className="hash">##</span>
           <h1>
-            <span className="path">~/resume</span>
+            <span className="path">resume</span>
           </h1>
         </div>
         <p className="lead dim">

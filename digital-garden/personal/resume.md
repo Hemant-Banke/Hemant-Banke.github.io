@@ -1,9 +1,9 @@
 ---
 title: résumé
-summary: My CV — experience, research, and skills, as a one-page PDF.
+summary: My Academic CV
 date: 2026-07-01
 star: false
 links:
   - label: pdf
-    href: /Hemant_Banke_Research_CV.pdf
+    href: /Hemant_Banke_Academic_CV.pdf
 ---

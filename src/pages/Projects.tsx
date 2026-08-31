@@ -8,9 +8,8 @@ export default function Projects() {
   return (
     <div className="page layout">
       <div className="section-head">
-        <span className="hash">##</span>
         <h1>
-          <span className="path">~/projects</span>
+          <span className="path">projects</span>
         </h1>
       </div>
       <p className="lead">

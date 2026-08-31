@@ -8,9 +8,8 @@ export default function Research() {
   return (
     <div className="page layout">
       <div className="section-head">
-        <span className="hash">##</span>
         <h1>
-          <span className="path">~/research</span>
+          <span className="path">research</span>
         </h1>
       </div>
       <p className="lead">

@@ -412,11 +412,19 @@
   position: absolute;
   inset: 0;
   z-index: 0;
-  opacity: 0.32;
+  opacity: 0.8;
   pointer-events: none;
   mask-image: radial-gradient(120% 120% at 50% 40%, transparent 30%, #000 100%);
   -webkit-mask-image: radial-gradient(120% 120% at 50% 40%, transparent 30%, #000 100%);
-  animation: pdffs-in 0.6s ease-out both;
+  /* Only a `from` keyframe: the implicit end state is the element's own
+     opacity, so this fades in to 0.32 here and to whatever a variant declares.
+     Animating to a literal `opacity: 1` overrode both. */
+  animation: ascii-field-in 0.6s ease-out both;
+}
+@keyframes ascii-field-in {
+  from {
+    opacity: 0;
+  }
 }
 @keyframes pdffs-in {
   from {

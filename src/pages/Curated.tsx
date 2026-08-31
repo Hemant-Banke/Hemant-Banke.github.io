@@ -9,7 +9,7 @@ export default function Curated() {
       <div className="section-head">
         <span className="hash star-badge">★</span>
         <h1>
-          <span className="path">~/curated</span>
+          <span className="path">curated</span>
         </h1>
       </div>
       <p className="lead">

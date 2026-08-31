@@ -8,32 +8,18 @@ import {
   getGroup,
   getNote,
   isPdfOnly,
-  manifest,
+  noteSubgraph,
   pdfArtifact,
 } from "../content/manifest";
-import type { GraphEdge, GraphNode } from "../content/types";
 import NotFound from "./NotFound";
-
-/** Subgraph = the note, its group, and everything one hop away. */
-function neighbourhood(slug: string): { nodes: GraphNode[]; edges: GraphEdge[] } {
-  const keep = new Set<string>([slug]);
-  for (const e of manifest.graph.edges) {
-    if (e.source === slug) keep.add(e.target);
-    if (e.target === slug) keep.add(e.source);
-  }
-  const nodes = manifest.graph.nodes.filter((n) => keep.has(n.id));
-  const edges = manifest.graph.edges.filter(
-    (e) => keep.has(e.source) && keep.has(e.target),
-  );
-  return { nodes, edges };
-}
 
 export default function Note() {
   const params = useParams();
   const slug = params["*"] ?? "";
   const note = getNote(slug);
 
-  const sub = useMemo(() => (note ? neighbourhood(slug) : null), [slug, note]);
+  // The note's subset graph, laid out at build time (see graph-layout.mjs).
+  const sub = useMemo(() => (note ? noteSubgraph(slug) : null), [slug, note]);
 
   if (!note) return <NotFound />;
 
@@ -138,6 +124,7 @@ export default function Note() {
             <AsciiGraph
               nodes={sub.nodes}
               edges={sub.edges}
+              positions={sub.positions}
               height={300}
               focusId={slug}
               mini

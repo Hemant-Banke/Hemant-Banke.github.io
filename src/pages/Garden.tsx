@@ -2,7 +2,7 @@ import { type CSSProperties, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AsciiGraph from "../components/AsciiGraph";
 import FileTree from "../components/FileTree";
-import { manifest, recentNotes } from "../content/manifest";
+import { fullGraphPositions, manifest, recentNotes } from "../content/manifest";
 import { useIsNarrow } from "../lib/hooks";
 
 type View = "graph" | "explorer";
@@ -22,14 +22,13 @@ export default function Garden() {
   return (
     <div className="page layout garden-index">
       <div className="section-head">
-        <span className="hash">##</span>
         <h1>
-          <span className="path">~/digital-garden</span> · knowledge graph
+          <span className="path">digital-garden</span> · knowledge graph
         </h1>
       </div>
       <p className="lead">
-        A public notebook. Folders are groups; <span className="accent-green">[[links]]</span>{" "}
-        are edges. Wander the graph or browse the tree.
+        A public notebook. Folders are groups; links are edges. Wander the graph
+        or browse the tree.
       </p>
 
       <div className="garden-toolbar">
@@ -69,11 +68,13 @@ export default function Garden() {
 
       {view === "graph" ? (
         <div className="box graph-box">
-          <span className="box-title">graph — force-directed · ascii</span>
+          <span className="box-title">graph — force-directed</span>
           <AsciiGraph
             nodes={manifest.graph.nodes}
             edges={manifest.graph.edges}
+            positions={fullGraphPositions()}
             height={narrow ? 420 : 580}
+            initialZoom={0.36}
           />
         </div>
       ) : (

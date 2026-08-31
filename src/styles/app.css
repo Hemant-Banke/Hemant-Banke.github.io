@@ -57,38 +57,141 @@
   margin-right: 0.3ch;
 }
 
-/* ---- floating theme toggle ------------------------------------------------ */
-.theme-toggle-pill {
+/* ---- floating dock (theme + simulation picker) --------------------------- */
+/* One pill. Two segments on the home page (simulation | theme), just the theme
+   button elsewhere, where there is no simulation to pick. */
+.dock {
   position: fixed;
   right: 1.1rem;
   bottom: 1.1rem;
   z-index: 60;
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg-1);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.3);
+}
+.dock-sim-wrap {
+  position: relative;
+  display: flex;
+}
+.dock-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.6rem;
-  height: 2.6rem;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--bg-1) 88%, transparent);
-  backdrop-filter: blur(8px);
-  color: var(--ink);
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--dim);
   font: inherit;
-  font-size: 1.15rem;
   line-height: 1;
   cursor: pointer;
-  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.3);
-  transition: border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease,
-    transform 0.12s ease;
+  transition: color 0.12s ease, background 0.12s ease;
 }
-.theme-toggle-pill:hover {
-  border-color: var(--green);
-  color: var(--ink-strong);
-  box-shadow: 0 2px 18px rgba(0, 0, 0, 0.34), inset 0 0 0 1px
-    rgba(69, 240, 138, 0.25);
+.dock-btn svg {
+  width: 1.1rem;
+  height: 1.1rem;
 }
-.theme-toggle-pill:active {
+.dock-btn:hover,
+.dock-btn[aria-expanded="true"] {
+  color: var(--green);
+}
+.dock-btn:active {
   transform: scale(0.94);
+}
+.dock-btn:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: -3px;
+}
+/* Shading separates the segments: the simulation half sits a step darker (a
+   step lighter on the light view) than the theme half. */
+.dock-btn-sim {
+  border-radius: 999px 0 0 999px;
+  background: var(--bg-2);
+  box-shadow: inset -1px 0 0 var(--line);
+}
+.dock-btn-theme {
+  border-radius: 0 999px 999px 0;
+}
+.dock-solo .dock-btn-theme {
+  border-radius: 999px;
+}
+@media (max-width: 700px) {
+  .dock {
+    right: auto;
+    left: 1rem;
+  }
+  /* menu follows the dock to the left edge */
+  .dock-menu {
+    right: auto;
+    left: 0;
+  }
+}
+
+/* Picker: names only, anchored above the button. The ::after bridges the gap
+   so the pointer can cross from button to panel without closing it. */
+.dock-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  display: flex;
+  flex-direction: column;
+  width: max-content;
+  padding: 0.3rem;
+  border: 1px solid var(--line);
+  background: var(--bg-1);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  animation: dock-menu-in 0.12s ease-out both;
+}
+.dock-menu::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 0.6rem;
+}
+@keyframes dock-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.dock-menu-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6ch;
+  padding: 0.28rem 0.6rem;
+  border: none;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.dock-menu-item:hover {
+  background: var(--bg-2);
+  color: var(--ink-strong);
+}
+.dock-menu-item[aria-checked="true"] {
+  color: var(--ink-strong);
+}
+.dock-menu-item:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
+.dock-menu-mark {
+  color: var(--green);
 }
 
 /* ---- page scaffolding --------------------------------------------------- */
@@ -121,63 +224,88 @@
   margin: 0 0 2.5rem;
 }
 
-/* ---- generic card grid (projects / research) ---------------------------- */
-.card-grid {
-  display: grid;
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-}
-.card {
-  background: var(--bg-1);
-  padding: 1.4rem;
+/* ---- listings: academic line items -------------------------------------- */
+/* Every listing (research, projects, curated, home) is one full-width column
+   of reference-style entries, separated by rules rather than boxed in cards. */
+.item-list {
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  transition: background 0.15s ease;
+  border-top: 1px solid var(--line-soft);
 }
-.card:hover {
-  background: var(--bg-2);
+.item {
+  padding: 1.1rem 0.2rem;
+  border-bottom: 1px solid var(--line-soft);
 }
-.card-top {
+.item-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 1ch;
+  gap: 1.5ch;
 }
-.card-name {
+.item-title {
   color: var(--ink-strong);
-  font-weight: 700;
-  font-size: 1.05rem;
+  font-weight: 500;
+  font-size: 1.02rem;
+  line-height: 1.35;
+  border: none;
+  text-indent: -1.4ch;
+  padding-left: 1.4ch;
 }
-.card-name::before {
+.item-title::before {
   content: "◆ ";
   color: var(--accent);
 }
-.card-blurb {
+/* featured pages take an amber star in place of the diamond marker */
+.item-title-star::before {
+  content: "★ ";
+  color: var(--amber);
+}
+.item-title:hover {
+  border: none;
+  color: var(--accent);
+}
+.item-date {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+/* Attribution line: authors / venue / folder / status, the way a citation
+   carries its provenance under the title. */
+.item-byline {
+  margin: 0.2rem 0 0;
+  padding-left: 1.4ch;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+.item-status {
+  margin-left: 1ch;
+}
+.item-summary {
+  margin: 0.45rem 0 0;
+  padding-left: 1.4ch;
   color: var(--ink);
-  margin: 0;
+  max-width: var(--measure);
+  line-height: 1.5;
 }
-.card-byline {
-  margin: -0.2rem 0 0;
-  font-size: 0.82rem;
+.item-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 2ch;
+  margin-top: 0.55rem;
+  padding-left: 1.4ch;
 }
-.note-byline {
-  margin: 0 0 0.6rem;
-  font-size: 0.92rem;
-}
-.card-meta {
+.item-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5ch;
-  margin-top: auto;
-  padding-top: 0.4rem;
 }
-.card-links {
+.item-links {
   display: flex;
   gap: 1.2ch;
   flex-wrap: wrap;
+  margin-left: auto;
 }
 .badge {
   font-size: 0.72rem;
@@ -195,18 +323,30 @@
 .badge.archived {
   color: var(--dim);
 }
+.note-byline {
+  margin: 0 0 0.6rem;
+  font-size: 0.92rem;
+}
 
 /* ---- footer ------------------------------------------------------------- */
 .footer {
+  position: relative;
+  overflow: hidden;
   border-top: 1px solid var(--line);
   padding: 2.5rem 0 3rem;
   margin-top: 3rem;
 }
-.footer-rule {
-  color: var(--dimmer);
-  overflow: hidden;
-  white-space: nowrap;
-  margin-bottom: 1.2rem;
+/* Reaction-diffusion field behind the footer. It pauses itself whenever the
+   footer is off screen or the tab is backgrounded (whileVisible), so it costs
+   nothing until you actually reach the bottom of a page. */
+.ascii-field.footer-field {
+  opacity: 0.2;
+  mask-image: linear-gradient(to bottom, transparent 12%, #000 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 12%, #000 100%);
+}
+.footer-inner {
+  position: relative;
+  z-index: 1;
 }
 .footer-grid {
   display: flex;
@@ -264,25 +404,11 @@
   margin: 0;
 }
 
-/* ---- star / featured ---- */
 .star-badge {
   color: var(--amber);
 }
 .badge.star-badge {
   border-color: var(--amber);
-}
-.card-badges {
-  display: inline-flex;
-  gap: 0.4ch;
-  align-items: baseline;
-  flex-shrink: 0;
-}
-a.card-name {
-  border: none;
-}
-a.card-name:hover {
-  border: none;
-  color: var(--accent);
 }
 
 /* ---- primary/artifact links ---- */
@@ -326,6 +452,58 @@ a.card-name:hover {
 .starred {
   margin: 0 0 2.5rem;
 }
+/* ---- home: research / projects tabs ------------------------------------- */
+.home-work {
+  padding-top: clamp(2.5rem, 6vw, 4.5rem);
+}
+.work-tabs .section-head {
+  margin-bottom: 0.9rem;
+}
+.work-tabs .section-head h2 {
+  font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+}
+.work-tabs-all {
+  margin-left: auto;
+  align-self: center;
+}
+.work-tabs-all:hover {
+  color: var(--green);
+}
+/* Tabs as a terminal-style rail: the active one is marked with a caret and
+   sits on the content, the inactive ones recede. */
+.work-tabbar {
+  display: flex;
+  gap: 0.3rem;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 1.1rem;
+}
+.work-tab {
+  font: inherit;
+  font-size: 0.92rem;
+  white-space: pre;
+  padding: 0.4rem 1ch 0.5rem;
+  margin-bottom: -1px;
+  border: 1px solid transparent;
+  border-bottom-color: var(--line);
+  background: none;
+  color: var(--dim);
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+.work-tab:hover {
+  color: var(--ink-strong);
+}
+.work-tab[aria-selected="true"] {
+  color: var(--green);
+  background: var(--bg-1);
+  border-color: var(--line);
+  border-bottom-color: transparent;
+}
+.work-tab:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
+
 .home-starred {
   padding-top: clamp(2.5rem, 6vw, 4.5rem);
 }
@@ -339,56 +517,6 @@ a.card-name:hover {
 .starred-count {
   margin-left: auto;
   font-size: 0.85rem;
-}
-.starred-grid {
-  display: grid;
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-}
-.starred-card {
-  background: var(--bg-1);
-  padding: 1.1rem 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  border-top: 2px solid var(--amber);
-  transition: background 0.14s ease;
-}
-.starred-card:hover {
-  background: var(--bg-2);
-}
-.starred-head {
-  display: flex;
-  align-items: baseline;
-  gap: 0.8ch;
-  flex-wrap: wrap;
-}
-.starred-title {
-  color: var(--ink-strong);
-  font-weight: 700;
-  border: none;
-}
-.starred-title::before {
-  content: "★ ";
-  color: var(--amber);
-}
-.starred-title:hover {
-  color: var(--amber);
-  border: none;
-}
-.starred-group {
-  font-size: 0.8rem;
-  margin-left: auto;
-}
-.starred-summary {
-  margin: 0;
-  font-size: 0.9rem;
-}
-.starred-links {
-  margin-top: auto;
-  padding-top: 0.2rem;
 }
 a.starred-count {
   border: none;

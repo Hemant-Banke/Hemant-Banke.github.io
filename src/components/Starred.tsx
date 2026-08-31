@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import ArtifactLinks from "./ArtifactLinks";
-import { groupLabel, starredNotes } from "../content/manifest";
+import NoteItem from "./NoteItem";
+import { starredNotes } from "../content/manifest";
 
 /**
  * Curated section of starred/featured pages, so visitors can reach the good
@@ -22,18 +22,9 @@ export default function Starred({ max }: { max?: number }) {
           all {all.length} →
         </Link>
       </div>
-      <div className="starred-grid">
+      <div className="item-list">
         {items.map((n) => (
-          <article className="starred-card" key={n.slug}>
-            <div className="starred-head">
-              <Link to={`/digital-garden/${n.slug}`} className="starred-title">
-                {n.title}
-              </Link>
-              <span className="starred-group dim">{groupLabel(n)}</span>
-            </div>
-            {n.summary && <p className="starred-summary dim">{n.summary}</p>}
-            <ArtifactLinks artifacts={n.artifacts} className="starred-links" />
-          </article>
+          <NoteItem note={n} showGroup key={n.slug} />
         ))}
       </div>
     </section>

@@ -45,19 +45,18 @@
      you still watch the emergence from the very beginning */
   animation: field-in 0.5s ease-out both;
 }
-.particle-life-field {
+/* The simulation fills the panel; it's picked from the floating dock. */
+.sim-stage {
+  position: absolute;
+  inset: 0;
+}
+.particle-life-field,
+.morphogen-field {
   display: block;
   width: 100%;
   height: 100%;
 }
-@keyframes field-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+
 .wordmark-wrap {
   width: 100%;
   max-width: 62rem;
@@ -221,56 +220,6 @@
 .home-recent-all:hover {
   color: var(--green);
 }
-.recent-list {
-  display: grid;
-  gap: 1px;
-  background: var(--line);
-  border: 1px solid var(--line);
-}
-.recent-item {
-  background: var(--bg-1);
-  padding: 1rem 1.2rem;
-  transition: background 0.14s ease;
-}
-.recent-item:hover {
-  background: var(--bg-2);
-}
-.recent-link {
-  border: none;
-  color: var(--ink);
-  display: flex;
-  align-items: flex-start;
-  gap: 0.8ch;
-}
-.recent-link:hover {
-  border: none;
-}
-/* title + folder stick together and wrap as one unit when they overflow;
-   the date stays put on the right. */
-.recent-left {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.4rem 0.8ch;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.recent-title {
-  color: var(--ink-strong);
-  font-weight: 500;
-}
-.recent-link:hover .recent-title {
-  color: var(--green);
-}
-.recent-date {
-  flex-shrink: 0;
-  font-size: 0.82rem;
-}
-.recent-summary {
-  margin: 0.35rem 0 0;
-  font-size: 0.9rem;
-  max-width: var(--measure);
-}
 
 /* Phones: the field collapses from a half-screen column to a thin band above
    the text. `order` (not a JSX reorder) so the ParticleLife canvas never
@@ -286,12 +235,10 @@
   .hero-field-col {
     order: -1;
     flex: none;
-    height: clamp(88px, 24vh, 160px);
+    height: clamp(130px, 26vh, 190px);
     border-left: none;
     border-bottom: 1px solid var(--line);
   }
-  /* "[ open graph → ]" drops to its own line instead of squeezing onto the
-     heading's row. */
   .home-recent-all {
     flex-basis: 100%;
     margin-left: 0;

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import NoteCard from "./NoteCard";
+import NoteItem from "./NoteItem";
 import type { NoteMeta } from "../content/types";
 
 type Sort = "newest" | "oldest" | "a–z";
@@ -132,9 +132,9 @@ export default function NoteBrowser({
       </div>
 
       {shown.length ? (
-        <div className="card-grid">
+        <div className="item-list">
           {shown.map((n) => (
-            <NoteCard note={n} key={n.slug} />
+            <NoteItem note={n} showGroup={groups} key={n.slug} />
           ))}
         </div>
       ) : (

@@ -71,3 +71,29 @@ export interface Manifest {
   tree: TreeNode[];
   generatedAt: string;
 }
+
+// ---------------------------------------------------------------------------
+// Pre-baked graph layouts (src/generated/layouts.json), produced by
+// plugins/graph-layout.mjs. The force simulation is a pure function of the
+// content, so it runs once at build time; AsciiGraph reads these world-space
+// positions instead of settling the graph in the browser.
+// ---------------------------------------------------------------------------
+
+/** World-space node positions, keyed by graph node id: `{ id: [x, y] }`. */
+export type GraphPositions = Record<string, [number, number]>;
+
+/**
+ * A note's subset graph: the note, its group, and everything one hop away —
+ * node ids resolved against `manifest.graph.nodes`, plus the edges among them.
+ */
+export interface SubGraph {
+  nodeIds: string[];
+  edges: GraphEdge[];
+  positions: GraphPositions;
+}
+
+export interface Layouts {
+  full: { positions: GraphPositions };
+  notes: Record<string, SubGraph>;
+  generatedAt: string;
+}

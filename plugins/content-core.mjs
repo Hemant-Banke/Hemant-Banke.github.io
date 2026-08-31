@@ -7,6 +7,7 @@ import path from "node:path";
 import matter from "gray-matter";
 import MarkdownIt from "markdown-it";
 import slugify from "slugify";
+import { buildLayouts } from "./graph-layout.mjs";
 
 // Deterministic accent palette for folder-groups. Mirrors the CSS accents.
 export const GROUP_COLORS = [
@@ -320,11 +321,24 @@ export async function buildManifest(gardenDir) {
   };
 }
 
-// Build the manifest and write it to disk. Shared by the Vite plugin and the
-// standalone build prestep.
-export async function writeManifest(gardenDir, outFile) {
+export const MANIFEST_FILE = "manifest.json";
+export const LAYOUTS_FILE = "layouts.json";
+
+// Build the manifest + the pre-baked graph layouts and write both into
+// `outDir` (src/generated/). Shared by the Vite plugin and the standalone
+// build prestep — the two files are always generated together so the layouts
+// can never describe a stale graph.
+export async function writeContent(gardenDir, outDir) {
   const manifest = await buildManifest(gardenDir);
-  await fs.mkdir(path.dirname(outFile), { recursive: true });
-  await fs.writeFile(outFile, JSON.stringify(manifest, null, 2));
-  return manifest;
+  const layouts = buildLayouts(manifest);
+  await fs.mkdir(outDir, { recursive: true });
+  await fs.writeFile(
+    path.join(outDir, MANIFEST_FILE),
+    JSON.stringify(manifest, null, 2),
+  );
+  await fs.writeFile(
+    path.join(outDir, LAYOUTS_FILE),
+    JSON.stringify(layouts, null, 2),
+  );
+  return { manifest, layouts };
 }

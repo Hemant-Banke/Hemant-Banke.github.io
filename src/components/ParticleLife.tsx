@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useReducedMotion } from "../lib/hooks";
+import { useReducedMotion, whileVisible } from "../lib/hooks";
 
 // Particle Life — an agent-based simulation in the spirit of Jeffrey Ventrella's
 // "Clusters" and Tom Mohr's particle-life. Thousands of coloured particles,
@@ -42,9 +42,14 @@ const FRICTION_HALFLIFE = 0.042; // velocity half-life (s) → damping
 // Solving for a constant neighbour count instead — n = NEIGHBORS·area/(π·rMax²)
 // — gives every screen the same organism richness, which means small screens
 // get proportionally more particles. That's the density phones were missing.
-const NEIGHBORS = 52; // avg particles within one interaction radius
-const MIN_PARTICLES = 200; // floor so a tiny canvas still shows something
-const MAX_PARTICLES = 5000; // ceiling so very large displays stay bounded
+// Cost per step is (particles × neighbours-in-range), so this is the main
+// lever on hero CPU: it scales the particle count and the inner loop.
+const NEIGHBORS = 32; // avg particles within one interaction radius
+const MIN_PARTICLES = 160; // floor so a tiny canvas still shows something
+const MAX_PARTICLES = 2400; // ceiling so very large displays stay bounded
+// Stepped on a fixed clock, not once per animation frame: DT is fixed, so
+// running the force pass at 60–120Hz bought nothing.
+const STEP_MS = 33; // ~30 steps/s
 const CORE = 2; // solid dot radius (px)
 const GLOW = 2; // glow falloff radius (px)
 
@@ -255,13 +260,20 @@ export default function ParticleLife() {
     resize();
 
     let raf = 0;
-    const loop = () => {
-      step();
-      render();
+    let last = 0;
+    const loop = (time: number) => {
+      if (time - last >= STEP_MS) {
+        step();
+        render();
+        last = time;
+      }
       raf = requestAnimationFrame(loop);
     };
     const start = () => {
-      if (!raf) raf = requestAnimationFrame(loop);
+      if (!raf) {
+        last = 0;
+        raf = requestAnimationFrame(loop);
+      }
     };
     const stop = () => {
       if (raf) {
@@ -270,30 +282,27 @@ export default function ParticleLife() {
       }
     };
 
-    // Pause when the hero scrolls out of view.
-    let io: IntersectionObserver | null = null;
     if (reduced) {
       for (let i = 0; i < 260; i++) step();
       render();
-    } else {
-      render();
-      io = new IntersectionObserver(([e]) => (e.isIntersecting ? start() : stop()), {
-        threshold: 0,
+      const ro = new ResizeObserver(() => {
+        if (resize()) {
+          for (let i = 0; i < 260; i++) step();
+          render();
+        }
       });
-      io.observe(canvas);
+      ro.observe(canvas.parentElement!);
+      return () => ro.disconnect();
     }
 
-    const ro = new ResizeObserver(() => {
-      if (resize() && reduced) {
-        for (let i = 0; i < 260; i++) step();
-        render();
-      }
-    });
+    render();
+    // Only runs while the hero is on screen and the tab is in the foreground.
+    const release = whileVisible(canvas, start, stop);
+    const ro = new ResizeObserver(() => resize());
     ro.observe(canvas.parentElement!);
 
     return () => {
-      stop();
-      io?.disconnect();
+      release();
       ro.disconnect();
     };
   }, [reduced]);
