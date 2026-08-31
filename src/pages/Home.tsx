@@ -29,8 +29,8 @@ export default function Home() {
               </p>
 
               <div className="hero-cta">
-                <Link to="/research" className="btn">
-                  ▸ see research
+                <Link to="/resume" className="btn">
+                  ▸ see resume
                 </Link>
                 <Link to="/digital-garden" className="btn">
                   ▸ enter garden

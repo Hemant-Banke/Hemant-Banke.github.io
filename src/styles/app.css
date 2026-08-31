@@ -119,18 +119,6 @@
 .dock-solo .dock-btn-theme {
   border-radius: 999px;
 }
-@media (max-width: 700px) {
-  .dock {
-    right: auto;
-    left: 1rem;
-  }
-  /* menu follows the dock to the left edge */
-  .dock-menu {
-    right: auto;
-    left: 0;
-  }
-}
-
 /* Picker: names only, anchored above the button. The ::after bridges the gap
    so the pointer can cross from button to panel without closing it. */
 .dock-menu {
@@ -307,6 +295,21 @@
   flex-wrap: wrap;
   margin-left: auto;
 }
+
+@media (max-width: 700px) {
+  /* Links stack above the tags and hug the left edge, instead of being pushed
+     to the right of the row where they'd wrap onto a line of their own. */
+  .item-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .item-links {
+    order: -1;
+    margin-left: 0;
+  }
+}
+
 .badge {
   font-size: 0.72rem;
   letter-spacing: 0.1em;

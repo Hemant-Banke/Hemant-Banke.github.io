@@ -46,6 +46,22 @@ export function whileVisible(
   };
 }
 
+/** True on devices that can actually hover (mouse/trackpad), false on touch. */
+export function useHasHover(): boolean {
+  const [hover, setHover] = useState(
+    () =>
+      typeof matchMedia === "undefined" ||
+      matchMedia("(hover: hover) and (pointer: fine)").matches,
+  );
+  useEffect(() => {
+    const mq = matchMedia("(hover: hover) and (pointer: fine)");
+    const on = () => setHover(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return hover;
+}
+
 /** Tracks whether the viewport is at/under `px` wide (default 720). */
 export function useIsNarrow(px = 720): boolean {
   const [narrow, setNarrow] = useState(

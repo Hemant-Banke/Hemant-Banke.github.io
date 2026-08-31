@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useHasHover } from "../lib/hooks";
 import { getTheme, setTheme, type Theme } from "../lib/theme";
 import { SIMS, setSim, useActiveSim } from "../lib/sims";
 
@@ -40,6 +41,11 @@ export default function FloatingDock() {
   const sim = useActiveSim();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  // On touch there is no hover, and wiring the panel to mouseenter actively
+  // broke it: a tap fires mouseenter (opening) and then click (toggling it
+  // shut again). Hover is an enhancement for pointer devices only; click is
+  // the interaction everywhere, keyboard included.
+  const canHover = useHasHover();
   // The simulation only exists behind the hero, so its control only appears there.
   const onHome = useLocation().pathname === "/";
 
@@ -79,12 +85,23 @@ export default function FloatingDock() {
         <div
           className="dock-sim-wrap"
           ref={menuRef}
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
+          onMouseEnter={canHover ? () => setOpen(true) : undefined}
+          onMouseLeave={canHover ? () => setOpen(false) : undefined}
           onBlur={(e) => {
             if (!e.currentTarget.contains(e.relatedTarget as Node)) setOpen(false);
           }}
         >
+          <button
+            type="button"
+            className="dock-btn dock-btn-sim"
+            aria-haspopup="menu"
+            aria-expanded={open}
+            aria-label={`background simulation: ${sim.label}`}
+            title={`background simulation: ${sim.label}`}
+            onClick={() => setOpen((o) => !o)}
+          >
+            <SimIcon />
+          </button>
           {open && (
             <div className="dock-menu" role="menu" aria-label="background simulation">
               {SIMS.map((s) => (
@@ -107,18 +124,6 @@ export default function FloatingDock() {
               ))}
             </div>
           )}
-          <button
-            type="button"
-            className="dock-btn dock-btn-sim"
-            aria-haspopup="menu"
-            aria-expanded={open}
-            aria-label={`background simulation: ${sim.label}`}
-            title={`background simulation: ${sim.label}`}
-            onClick={() => setOpen((o) => !o)}
-            onFocus={() => setOpen(true)}
-          >
-            <SimIcon />
-          </button>
         </div>
       )}
 
