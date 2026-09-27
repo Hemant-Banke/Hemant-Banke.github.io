@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import NoteBrowser from "../components/NoteBrowser";
 import { notesInGroup } from "../content/manifest";
+import { useDocumentTitle } from "../lib/hooks";
 
 export default function Research() {
+  useDocumentTitle("Research");
   const items = notesInGroup("research");
 
   return (

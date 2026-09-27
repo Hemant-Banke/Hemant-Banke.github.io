@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useDocumentTitle } from "../lib/hooks";
 
 const ART = String.raw`
   _  _    ___  _  _
@@ -9,6 +10,7 @@ const ART = String.raw`
 `;
 
 export default function NotFound() {
+  useDocumentTitle("Not found");
   return (
     <div className="page layout notfound">
       <pre className="notfound-art accent-magenta">{ART}</pre>

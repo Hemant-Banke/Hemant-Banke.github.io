@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { site } from "../data/site";
 
 /** True when the visitor prefers reduced motion; kept in sync live. */
 export function useReducedMotion(): boolean {
@@ -100,4 +101,14 @@ export function useDismiss(
       window.removeEventListener("pointerdown", onDown);
     };
   }, [open, ref, close]);
+}
+
+/**
+ * Sets the tab title: "<page> | <name>", or just the name when `page` is
+ * omitted (the home page).
+ */
+export function useDocumentTitle(page?: string): void {
+  useEffect(() => {
+    document.title = page ? `${page} | ${site.name}` : site.name;
+  }, [page]);
 }

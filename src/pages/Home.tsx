@@ -7,8 +7,10 @@ import WorkTabs from "../components/WorkTabs";
 import { site } from "../data/site";
 import NoteItem from "../components/NoteItem";
 import { recentNotes } from "../content/manifest";
+import { useDocumentTitle } from "../lib/hooks";
 
 export default function Home() {
+  useDocumentTitle();
   const recent = useMemo(() => recentNotes().slice(0, 4), []);
 
   return (

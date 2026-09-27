@@ -3,11 +3,12 @@ import { Link } from "react-router-dom";
 import AsciiGraph from "../components/AsciiGraph";
 import FileTree from "../components/FileTree";
 import { fullGraphPositions, getGroup, manifest, recentNotes } from "../content/manifest";
-import { useDismiss, useIsNarrow } from "../lib/hooks";
+import { useDismiss, useDocumentTitle, useIsNarrow } from "../lib/hooks";
 
 type View = "graph" | "explorer";
 
 export default function Garden() {
+  useDocumentTitle("Garden");
   const narrow = useIsNarrow();
   const [view, setView] = useState<View>(narrow ? "explorer" : "graph");
   // Active topic filter for the explorer note list (null = all topics).

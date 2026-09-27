@@ -4,12 +4,14 @@ import ArtifactLinks from "../components/ArtifactLinks";
 import GraphDock from "../components/GraphDock";
 import NoteBody from "../components/NoteBody";
 import { getNote, noteSubgraph } from "../content/manifest";
+import { useDocumentTitle } from "../lib/hooks";
 import NotFound from "./NotFound";
 
 export default function Note() {
   const params = useParams();
   const slug = params["*"] ?? "";
   const note = getNote(slug);
+  useDocumentTitle(note ? note.title : "Not found");
 
   // The note's subset graph, laid out at build time (see graph-layout.mjs).
   const sub = useMemo(() => (note ? noteSubgraph(slug) : null), [slug, note]);
