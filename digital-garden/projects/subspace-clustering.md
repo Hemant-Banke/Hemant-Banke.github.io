@@ -6,7 +6,7 @@ summary: A survey and hands-on comparison of bottom-up (CLIQUE) and top-down (PR
 byline: with Borish Jha · ISI Kolkata
 links:
   - label: slides
-    href: /project_reports/Subspace%20Clustering.pdf
+    href: /artifacts/project_reports/Subspace%20Clustering.pdf
 ---
 
 Ordinary clustering assumes every point lives in the same feature space.

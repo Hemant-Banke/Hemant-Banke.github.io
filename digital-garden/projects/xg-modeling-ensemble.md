@@ -6,7 +6,7 @@ summary: Stacked ensembles for shot-quality estimation in football, with two cus
 byline: with Sayantan Deb Barman, Soham Majumdar · guided by Prof. Dr. Deepayan Sarkar · ISI Kolkata
 links:
   - label: report
-    href: /project_reports/Building%20Expected%20Goals%20(xG)%20Model%20using%20Ensemble%20Methods%20in%20Football%20Analytics.pdf
+    href: /artifacts/project_reports/Building%20Expected%20Goals%20(xG)%20Model%20using%20Ensemble%20Methods%20in%20Football%20Analytics.pdf
 ---
 
 *Supervisor: Prof. Dr. Deepayan Sarkar, ISI Delhi*

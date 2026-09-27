@@ -6,7 +6,7 @@ summary: Fitting separate multiple linear regression models for plasma insulin a
 byline: with Bhushan Suresh Malgunkar, Sayantan Deb Barman · guided by Prof. Dr. Swagata Nandi · ISI New Delhi
 links:
   - label: report
-    href: /project_reports/Predicting%20Insulin%20Levels%20via%20Regression%20Modeling.pdf
+    href: /artifacts/project_reports/Predicting%20Insulin%20Levels%20via%20Regression%20Modeling.pdf
 ---
 
 *Supervisor: Prof. Dr. Swagata Nandi, ISI New Delhi*

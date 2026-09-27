@@ -6,7 +6,7 @@ summary: Deriving and numerically comparing Edgeworth and saddlepoint approximat
 byline: solo · statistical computing exercise · guided by Prof. Dr. Sourabh Bhattacharya · ISI Kolkata
 links:
   - label: writeup
-    href: /project_reports/Edge%20Worth%20and%20Saddle%20Point%20Approximations%20of%20density.pdf
+    href: /artifacts/project_reports/Edge%20Worth%20and%20Saddle%20Point%20Approximations%20of%20density.pdf
 ---
 
 *Supervisor: Prof. Dr. Sourabh Bhattacharya, ISI Kolkata*

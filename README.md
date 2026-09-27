@@ -34,13 +34,13 @@ status: ongoing                    # optional
 star: true                         # optional, adds a ★
 links:                             # optional buttons
   - label: pdf
-    href: /my-report.pdf
+    href: /artifacts/my-report.pdf
 ---
 
 Body text. Link other posts with [[Post Title]] or [[folder/post|custom text]].
 ```
 
-PDFs and other files go in `public/` and are linked directly.
+PDFs and other files go in `public/artifacts/` and are linked directly.
 
 ## Edit
 

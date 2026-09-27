@@ -6,7 +6,7 @@ summary: Research reading of a stochastic-Taylor-expansion technique for pricing
 byline: with Vicky Gupta, Kushpreet Singh · guided by Prof. Diganta Mukherjee · ISI Kolkata
 links:
   - label: summary report
-    href: /project_reports/More%20Stochastic%20Expansions%20for%20pricing%20vanilla%20options%20with%20cash%20dividents.pdf
+    href: /artifacts/project_reports/More%20Stochastic%20Expansions%20for%20pricing%20vanilla%20options%20with%20cash%20dividents.pdf
 ---
 
 *Supervisor: Prof. Dr. Diganta Mukherjee*

@@ -7,9 +7,9 @@ summary: Day-ahead IV forecasting gains via gradient-boosted ensembles combining
 byline: guided by Prof. Dr. Diganta Mukherjee · ISI Kolkata
 links:
   - label: summary report
-    href: /project_reports/Nowcasting%20Stock%20Implied%20Volatility%20using%20Twitter.pdf
+    href: /artifacts/project_reports/Nowcasting%20Stock%20Implied%20Volatility%20using%20Twitter.pdf
   - label: extension
-    href: /project_reports/Nowcasting%20Stock%20Implied%20Volatility%20using%20Twitter%20(Extension).pdf
+    href: /artifacts/project_reports/Nowcasting%20Stock%20Implied%20Volatility%20using%20Twitter%20(Extension).pdf
 ---
 
 *Supervisor: Prof. Dr. Diganta Mukherjee, ISI Kolkata*

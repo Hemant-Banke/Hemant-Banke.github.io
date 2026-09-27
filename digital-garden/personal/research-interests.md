@@ -4,7 +4,7 @@ date: 2026-08-01
 summary: My Research Interests and how they connect to what I want to contribute to humanity.
 links:
   - label: pdf
-    href: /Research_Interests.pdf
+    href: /artifacts/Research_Interests.pdf
 ---
 
 I am interested in **model-based multi-agent RL**: learning predictive models of worlds containing other

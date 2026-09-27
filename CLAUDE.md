@@ -38,7 +38,7 @@ static, deployed to GitHub Pages (root domain, `base: '/'`).
   static under reduced motion. Theme-reactive via `themechange`.
 - **Routing** — `BrowserRouter`; notes at `/digital-garden/*` (splat = note slug).
 - **Static content** — `src/data/*` (site, socials, projects, research).
-- **PDFs** — static files in `public/`, linked directly (open in a new tab in
+- **PDFs** — static files in `public/artifacts/`, linked directly (open in a new tab in
   the browser's own viewer). No in-app PDF viewer.
 - **Styles** — `src/styles/{theme,app,hero,garden}.css`. Palette = CSS variables at
   the top of `theme.css`.

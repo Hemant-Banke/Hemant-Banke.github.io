@@ -20,8 +20,8 @@ export const site = {
 
   email: "hemantbanke5@gmail.com",
 
-  // PDFs are static files in public/ and open in the browser's own viewer.
-  resumePdf: "/Hemant_Banke_Academic_CV.pdf",
+  // PDFs are static files in public/artifacts/ and open in the browser's own viewer.
+  resumePdf: "/artifacts/Hemant_Banke_Academic_CV.pdf",
 };
 
 export type Site = typeof site;

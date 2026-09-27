@@ -7,9 +7,9 @@ byline: Master's Thesis · guided by Prof. Dr. B. Uma Shankar · ISI Kolkata
 star: true
 links:
   - label: thesis
-    href: /project_reports/Improved%20terrestrial%20Gross%20Primary%20Productivity%20(GPP)%20estimation%20using%20multisource%20Data/Project%20Report.pdf
+    href: /artifacts/project_reports/Improved%20terrestrial%20Gross%20Primary%20Productivity%20(GPP)%20estimation%20using%20multisource%20Data/Project%20Report.pdf
   - label: slides
-    href: /project_reports/Improved%20terrestrial%20Gross%20Primary%20Productivity%20(GPP)%20estimation%20using%20multisource%20Data/Endterm%20Presentation.pdf
+    href: /artifacts/project_reports/Improved%20terrestrial%20Gross%20Primary%20Productivity%20(GPP)%20estimation%20using%20multisource%20Data/Endterm%20Presentation.pdf
 ---
 
 *Supervisor: Prof. Dr. B. Uma Shankar, ISI Kolkata*

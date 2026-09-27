@@ -6,7 +6,7 @@ summary: Studying simulating discrete-time Markov chains with random TPMs, stati
 byline: solo · guided by Prof. Dr. Abhay G. Bhatt · ISI Delhi
 links:
   - label: notebook
-    href: /project_reports/Simulation%20and%20Analysis%20of%20Markov%20Chains.pdf
+    href: /artifacts/project_reports/Simulation%20and%20Analysis%20of%20Markov%20Chains.pdf
 ---
 
 *Supervisor: Prof. Dr. Abhay G. Bhatt, ISI Delhi*
