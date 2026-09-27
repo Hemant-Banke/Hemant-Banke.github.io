@@ -1,4 +1,5 @@
-// Social / contact links. `label` is shown as ASCII text;
+// Social / contact links, rendered as icons (Socials.tsx maps `key` to an
+// icon). `label` is the accessible name; `label · handle` is the tooltip.
 import { site } from "./site";
 
 export interface Social {

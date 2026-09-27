@@ -1,5 +1,4 @@
 import { type ComponentType, useEffect, useState } from "react";
-import Morphogenesis from "../components/Morphogenesis";
 import ParticleLife from "../components/ParticleLife";
 
 // Registry of the hero's background simulations. To add one: write the
@@ -20,12 +19,6 @@ export const SIMS: SimDef[] = [
     label: "particle life",
     blurb: "species attraction matrix · emergent colonies",
     Component: ParticleLife,
-  },
-  {
-    key: "morphogenesis",
-    label: "morphogenesis",
-    blurb: "seed · growth · pattern · regrowth",
-    Component: Morphogenesis,
   },
 ];
 

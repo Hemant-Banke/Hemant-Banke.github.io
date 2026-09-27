@@ -21,7 +21,7 @@ export interface NoteMeta {
   summary?: string;
   byline?: string; // optional subtitle, e.g. authors · venue (used by research)
   status?: string; // optional badge, e.g. "shipped" / "wip" (used by projects)
-  star: boolean; // featured — surfaced in the curated section
+  star: boolean; // featured — drawn with a ★ wherever it is listed
   artifacts: Artifact[]; // primary links (pdf, github, demo…) from frontmatter
   html: string; // rendered markdown body
   wordCount: number;

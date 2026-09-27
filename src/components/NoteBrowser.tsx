@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import NoteItem from "./NoteItem";
 import type { NoteMeta } from "../content/types";
+import { useDismiss } from "../lib/hooks";
 
 type Sort = "newest" | "oldest" | "a–z";
 
@@ -20,51 +21,38 @@ function applySort(notes: NoteMeta[], sort: Sort): NoteMeta[] {
 }
 
 /**
- * A filterable, sortable grid of note cards. Used by the projects, research, and
- * curated pages. Tag filters are OR'd; the optional group filter (for lists that
- * span folders, like curated) is OR'd too.
+ * A filterable, sortable list of note items. Used by the projects and research
+ * pages. The controls are one line (sort · tags · count); the full tag list
+ * lives in a popover dialog so it doesn't crowd the page, and the active tags
+ * show (removable) on their own row under the controls. Tag filters are OR'd.
  */
-export default function NoteBrowser({
-  notes,
-  groups = false,
-}: {
-  notes: NoteMeta[];
-  groups?: boolean;
-}) {
+export default function NoteBrowser({ notes }: { notes: NoteMeta[] }) {
   const [sort, setSort] = useState<Sort>("newest");
   const [tags, setTags] = useState<Set<string>>(new Set());
-  const [grps, setGrps] = useState<Set<string>>(new Set());
+  const [open, setOpen] = useState(false);
+  const anchorRef = useRef<HTMLDivElement>(null);
 
   const allTags = useMemo(() => {
-    const set = new Set<string>();
-    notes.forEach((n) => n.tags.forEach((t) => set.add(t)));
-    return [...set].sort();
+    const counts = new Map<string, number>();
+    notes.forEach((n) => n.tags.forEach((t) => counts.set(t, (counts.get(t) ?? 0) + 1)));
+    return [...counts].sort(([a], [b]) => a.localeCompare(b));
   }, [notes]);
 
-  const allGroups = useMemo(
-    () => [...new Set(notes.map((n) => n.group))].sort(),
-    [notes],
-  );
-
   const shown = useMemo(() => {
-    const filtered = notes.filter((n) => {
-      const tagOk = tags.size === 0 || n.tags.some((t) => tags.has(t));
-      const grpOk = grps.size === 0 || grps.has(n.group);
-      return tagOk && grpOk;
-    });
+    const filtered = notes.filter(
+      (n) => tags.size === 0 || n.tags.some((t) => tags.has(t)),
+    );
     return applySort(filtered, sort);
-  }, [notes, tags, grps, sort]);
+  }, [notes, tags, sort]);
 
-  const toggle =
-    (setter: React.Dispatch<React.SetStateAction<Set<string>>>) =>
-    (val: string) =>
-      setter((prev) => {
-        const next = new Set(prev);
-        next.has(val) ? next.delete(val) : next.add(val);
-        return next;
-      });
-  const toggleTag = toggle(setTags);
-  const toggleGrp = toggle(setGrps);
+  const toggleTag = (val: string) =>
+    setTags((prev) => {
+      const next = new Set(prev);
+      next.has(val) ? next.delete(val) : next.add(val);
+      return next;
+    });
+
+  useDismiss(open, anchorRef, useCallback(() => setOpen(false), []));
 
   return (
     <>
@@ -83,45 +71,50 @@ export default function NoteBrowser({
           ))}
         </div>
 
-        {groups && allGroups.length > 1 && (
-          <div className="browser-group">
-            <span className="browser-label dim">group</span>
-            {allGroups.map((g) => (
-              <button
-                key={g}
-                className="chip"
-                aria-pressed={grps.has(g)}
-                onClick={() => toggleGrp(g)}
-              >
-                {g}
-              </button>
-            ))}
-          </div>
-        )}
-
         {allTags.length > 0 && (
-          <div className="browser-group">
-            <span className="browser-label dim">tag</span>
-            {allTags.map((t) => (
-              <button
-                key={t}
-                className="chip"
-                aria-pressed={tags.has(t)}
-                onClick={() => toggleTag(t)}
-              >
-                #{t}
-              </button>
-            ))}
-            {(tags.size > 0 || grps.size > 0) && (
-              <button
-                className="chip chip-clear"
-                onClick={() => {
-                  setTags(new Set());
-                  setGrps(new Set());
-                }}
-              >
-                ✕ clear
-              </button>
+          <div className="browser-group tag-filter" ref={anchorRef}>
+            <button
+              className="chip tag-filter-btn"
+              aria-haspopup="dialog"
+              aria-expanded={open}
+              aria-pressed={tags.size > 0}
+              onClick={() => setOpen((o) => !o)}
+            >
+              # tags{tags.size > 0 && <span className="accent-green"> ({tags.size})</span>}
+              <span className="dim"> {open ? "▴" : "▾"}</span>
+            </button>
+
+            {open && (
+              <div className="tag-dialog box" role="dialog" aria-label="filter by tag">
+                <div className="tag-dialog-bar">
+                  <span className="accent-cyan">filter by tag</span>
+                  <span className="dim tag-dialog-hint">any match</span>
+                  {tags.size > 0 && (
+                    <button className="tag-dialog-act" onClick={() => setTags(new Set())}>
+                      clear
+                    </button>
+                  )}
+                  <button
+                    className="tag-dialog-act"
+                    aria-label="close"
+                    onClick={() => setOpen(false)}
+                  >
+                    [x]
+                  </button>
+                </div>
+                <div className="tag-dialog-list">
+                  {allTags.map(([t, n]) => (
+                    <button
+                      key={t}
+                      className="chip"
+                      aria-pressed={tags.has(t)}
+                      onClick={() => toggleTag(t)}
+                    >
+                      #{t} <span className="dim">{n}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -131,10 +124,26 @@ export default function NoteBrowser({
         </span>
       </div>
 
+      {tags.size > 0 && (
+        <div className="browser-active">
+          {[...tags].sort().map((t) => (
+            <button
+              key={t}
+              className="chip"
+              aria-pressed
+              aria-label={`remove filter #${t}`}
+              onClick={() => toggleTag(t)}
+            >
+              #{t} <span className="dim">✕</span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {shown.length ? (
         <div className="item-list">
           {shown.map((n) => (
-            <NoteItem note={n} showGroup={groups} key={n.slug} />
+            <NoteItem note={n} key={n.slug} />
           ))}
         </div>
       ) : (

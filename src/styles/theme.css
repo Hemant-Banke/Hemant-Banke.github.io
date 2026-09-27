@@ -34,8 +34,9 @@
   /* ink */
   --ink: #cdd8d2;
   --ink-strong: #eaf3ee;
-  --dim: #6b7a74;
-  --dimmer: #46534e;
+  /* secondary text: ~7.7:1 on --bg (small italic subheadings need the margin) */
+  --dim: #98a69f;
+  --dimmer: #6e7c75;
 
   /* accents */
   --green: #45f08a;
@@ -49,9 +50,19 @@
 
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Menlo", "Cascadia Code",
     "Roboto Mono", monospace;
+  /* Reading face for prose (post bodies, titles, summaries, intro). The UI
+     chrome stays monospace; long-form text in a mono face is tiring to read. */
+  --font-serif: "Newsreader Variable", "Iowan Old Style", "Palatino Linotype",
+    Palatino, Georgia, serif;
+  /* Light-on-dark serif strokes read thinner, so dark mode sets a touch heavier. */
+  --prose-weight: 430;
+  /* drop-cap ornament tile (colour baked into the SVG, so one per theme) */
+  --dropcap-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Cg fill='%2345f08a' fill-opacity='.22'%3E%3Ccircle cx='7' cy='4.7' r='1.4'/%3E%3Ccircle cx='7' cy='9.3' r='1.4'/%3E%3Ccircle cx='4.7' cy='7' r='1.4'/%3E%3Ccircle cx='9.3' cy='7' r='1.4'/%3E%3Ccircle cx='0' cy='0' r='.8'/%3E%3Ccircle cx='14' cy='0' r='.8'/%3E%3Ccircle cx='0' cy='14' r='.8'/%3E%3Ccircle cx='14' cy='14' r='.8'/%3E%3C/g%3E%3C/svg%3E");
 
   --measure: 68ch;
-  --gutter: clamp(1.25rem, 4vw, 3rem);
+  /* One side inset for every column (nav, pages, hero, footer) so their edges
+     line up. */
+  --gutter: 1rem;
   --radius: 0; /* terminals don't round corners */
 
   --glow: 0 0 1px currentColor, 0 0 10px rgba(69, 240, 138, 0.18);
@@ -78,6 +89,9 @@
   --cyan: #0d7a8c;
   --magenta: #a92a8c;
   --amber: #96620f;
+
+  --prose-weight: 400;
+  --dropcap-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14'%3E%3Cg fill='%23197a48' fill-opacity='.2'%3E%3Ccircle cx='7' cy='4.7' r='1.4'/%3E%3Ccircle cx='7' cy='9.3' r='1.4'/%3E%3Ccircle cx='4.7' cy='7' r='1.4'/%3E%3Ccircle cx='9.3' cy='7' r='1.4'/%3E%3Ccircle cx='0' cy='0' r='.8'/%3E%3Ccircle cx='14' cy='0' r='.8'/%3E%3Ccircle cx='0' cy='14' r='.8'/%3E%3Ccircle cx='14' cy='14' r='.8'/%3E%3C/g%3E%3C/svg%3E");
   --violet: #5340c4;
 
   --accent: var(--green);
@@ -155,9 +169,10 @@ h2,
 h3,
 h4 {
   color: var(--ink-strong);
-  font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: 0.02em;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   margin: 0 0 0.6em;
 }
 
@@ -171,6 +186,19 @@ code,
 kbd {
   font-family: var(--font-mono);
   font-size: 0.9em;
+}
+
+/* Everything set in the reading face. Inline code keeps the mono face. */
+.note-body,
+.note-title,
+.hero-intro,
+.lead,
+.item-title,
+.item-summary {
+  font-family: var(--font-serif);
+  font-weight: var(--prose-weight);
+  letter-spacing: 0;
+  font-kerning: normal;
 }
 
 /* ---- shared ascii bits -------------------------------------------------- */
@@ -261,7 +289,7 @@ kbd {
   color: var(--dim);
   border: 1px solid var(--line-soft);
   padding: 0 0.5ch;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   white-space: nowrap;
 }
 

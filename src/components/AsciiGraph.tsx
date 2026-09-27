@@ -111,7 +111,7 @@ export default function AsciiGraph({
       const cs = getComputedStyle(canvas);
       return {
         active: cs.getPropertyValue("--ink-strong").trim() || "#eaf3ee",
-        dim: cs.getPropertyValue("--dim").trim() || "#6b7a74",
+        dim: cs.getPropertyValue("--dim").trim() || "#98a69f",
         ink: cs.getPropertyValue("--ink").trim() || "#cdd8d2",
         star: cs.getPropertyValue("--amber").trim() || "#ffc061",
       };
@@ -149,9 +149,9 @@ export default function AsciiGraph({
     let H = 0;
     const resize = () => {
       // Use the canvas's own laid-out width (CSS width:100% of the content box)
-      // so we never overflow a padded container.
-      const rect = canvas.getBoundingClientRect();
-      W = Math.max(1, Math.floor(rect.width) || canvas.parentElement!.clientWidth);
+      // so we never overflow a padded container. Layout width, not the bounding
+      // rect, so an ancestor's transform (e.g. an opening animation) can't skew it.
+      W = Math.max(1, canvas.clientWidth || canvas.parentElement!.clientWidth);
       H = height;
       canvas.width = W * dpr;
       canvas.height = H * dpr;

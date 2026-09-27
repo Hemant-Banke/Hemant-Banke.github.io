@@ -5,16 +5,19 @@ import type { NoteMeta } from "../content/types";
 
 /**
  * A garden page as a full-width academic line item — title and date on the
- * first line, attribution under it, then the summary, then tags and links.
- * Used by every listing (research, projects, curated, home).
+ * first line, attribution under it, then its links, the summary, and tags.
+ * Used by every listing (research, projects, home).
  */
 export default function NoteItem({
   note,
   showGroup = false,
+  showTags = true,
 }: {
   note: NoteMeta;
   showGroup?: boolean;
+  showTags?: boolean;
 }) {
+  const tags = showTags ? note.tags : [];
   const group = showGroup ? groupLabel(note) : "";
 
   return (
@@ -41,20 +44,17 @@ export default function NoteItem({
         </p>
       )}
 
+      <ArtifactLinks artifacts={note.artifacts} className="item-links" />
+
       {note.summary && <p className="item-summary">{note.summary}</p>}
 
-      {(note.tags.length > 0 || note.artifacts.length > 0) && (
-        <div className="item-foot">
-          {note.tags.length > 0 && (
-            <div className="item-tags">
-              {note.tags.map((t) => (
-                <span className="tag" key={t}>
-                  #{t}
-                </span>
-              ))}
-            </div>
-          )}
-          <ArtifactLinks artifacts={note.artifacts} className="item-links" />
+      {tags.length > 0 && (
+        <div className="item-tags">
+          {tags.map((t) => (
+            <span className="tag" key={t}>
+              #{t}
+            </span>
+          ))}
         </div>
       )}
     </article>

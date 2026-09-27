@@ -46,11 +46,6 @@ export function recentNotes(): NoteMeta[] {
   return [...manifest.notes].sort(byRecency);
 }
 
-// Starred/featured notes for the curated section, newest-first.
-export function starredNotes(): NoteMeta[] {
-  return manifest.notes.filter((n) => n.star).sort(byRecency);
-}
-
 // Notes belonging to a folder-group (by group path, e.g. "projects").
 export function notesInGroup(groupPath: string): NoteMeta[] {
   return manifest.notes.filter((n) => n.group === groupPath).sort(byRecency);
@@ -59,17 +54,6 @@ export function notesInGroup(groupPath: string): NoteMeta[] {
 // Display group for a note in listings (e.g. "systems/"). Root notes → "".
 export function groupLabel(note: NoteMeta): string {
   return note.group === "root" ? "" : `${note.group}/`;
-}
-
-// First PDF among a note's artifact links, if any.
-export function pdfArtifact(note: NoteMeta): string | undefined {
-  return note.artifacts.find((a) => a.href.toLowerCase().endsWith(".pdf"))?.href;
-}
-
-// A page with no body text but a PDF link is really just a pointer to that PDF —
-// visiting it should open the PDF directly instead of an empty note.
-export function isPdfOnly(note: NoteMeta): boolean {
-  return note.wordCount === 0 && !!pdfArtifact(note);
 }
 
 // ---- graphs ---------------------------------------------------------------

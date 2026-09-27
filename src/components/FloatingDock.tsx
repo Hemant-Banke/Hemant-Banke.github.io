@@ -46,8 +46,9 @@ export default function FloatingDock() {
   // shut again). Hover is an enhancement for pointer devices only; click is
   // the interaction everywhere, keyboard included.
   const canHover = useHasHover();
-  // The simulation only exists behind the hero, so its control only appears there.
-  const onHome = useLocation().pathname === "/";
+  // The simulation only exists behind the hero, so its control only appears
+  // there — and only once there's more than one simulation to pick from.
+  const showSim = useLocation().pathname === "/" && SIMS.length > 1;
 
   useEffect(() => {
     const onThemeChange = (e: Event) =>
@@ -73,15 +74,15 @@ export default function FloatingDock() {
   }, [open]);
 
   useEffect(() => {
-    if (!onHome) setOpen(false);
-  }, [onHome]);
+    if (!showSim) setOpen(false);
+  }, [showSim]);
 
   const nextTheme = theme === "dark" ? "light" : "dark";
   const themeLabel = `switch to ${nextTheme} view`;
 
   return (
-    <div className={"dock" + (onHome ? "" : " dock-solo")}>
-      {onHome && (
+    <div className={"dock" + (showSim ? "" : " dock-solo")}>
+      {showSim && (
         <div
           className="dock-sim-wrap"
           ref={menuRef}

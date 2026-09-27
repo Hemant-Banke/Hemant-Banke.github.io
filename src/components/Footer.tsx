@@ -1,21 +1,20 @@
-import { site } from "../data/site";
-import AsciiField from "./AsciiField";
+import FooterGarden from "./FooterGarden";
 import Socials from "./Socials";
 
+// The whole footer is the garden; the quote, socials and attribution sit on it.
 export default function Footer() {
   return (
     <footer className="footer">
-      <AsciiField className="ascii-field footer-field" />
-      <div className="layout footer-inner">
-        <div className="footer-grid">
-          <Socials />
-          <p className="dim footer-note">
-            built with Claude ·{" "}
-            <span className="accent-green">{site.name}</span> ·{" "}
-            {new Date().getFullYear()}
+      <FooterGarden>
+        <div className="footer-garden-top">
+          <p className="footer-garden-quote">
+            <span className="footer-garden-line">il faut cultiver notre jardin.</span>
+            <span className="footer-garden-cite dim">— Voltaire, Candide</span>
           </p>
+          <Socials className="socials-footer" />
         </div>
-      </div>
+        <p className="footer-credit dim">built with Claude</p>
+      </FooterGarden>
     </footer>
   );
 }

@@ -1,9 +1,9 @@
-import { type CSSProperties, useMemo, useState } from "react";
+import { type CSSProperties, useCallback, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import AsciiGraph from "../components/AsciiGraph";
 import FileTree from "../components/FileTree";
-import { fullGraphPositions, manifest, recentNotes } from "../content/manifest";
-import { useIsNarrow } from "../lib/hooks";
+import { fullGraphPositions, getGroup, manifest, recentNotes } from "../content/manifest";
+import { useDismiss, useIsNarrow } from "../lib/hooks";
 
 type View = "graph" | "explorer";
 
@@ -12,6 +12,14 @@ export default function Garden() {
   const [view, setView] = useState<View>(narrow ? "explorer" : "graph");
   // Active topic filter for the explorer note list (null = all topics).
   const [topic, setTopic] = useState<string | null>(null);
+  const [topicsOpen, setTopicsOpen] = useState(false);
+  const topicRef = useRef<HTMLDivElement>(null);
+  useDismiss(topicsOpen, topicRef, useCallback(() => setTopicsOpen(false), []));
+  const activeGroup = topic ? getGroup(topic) : undefined;
+  const pickTopic = (slug: string | null) => {
+    setTopic(slug);
+    setTopicsOpen(false);
+  };
   const notes = recentNotes();
   const shownNotes = useMemo(
     () => (topic ? notes.filter((n) => n.groupSlug === topic) : notes),
@@ -87,45 +95,83 @@ export default function Garden() {
                 : "all notes — newest first"}
             </span>
 
-            <div
-              className="topic-filters"
-              role="group"
-              aria-label="filter notes by topic"
-            >
+            {/* Topic filter: one button; the topics live in a popover dialog. */}
+            <div className="topic-filter" ref={topicRef}>
               <button
                 className="topic-chip"
-                aria-pressed={topic === null}
-                onClick={() => setTopic(null)}
+                aria-haspopup="dialog"
+                aria-expanded={topicsOpen}
+                onClick={() => setTopicsOpen((o) => !o)}
+                style={{ "--chip": activeGroup?.color } as CSSProperties}
               >
-                all <span className="dim">({notes.length})</span>
+                <span className="topic-dot" aria-hidden="true">
+                  ●
+                </span>
+                {activeGroup ? activeGroup.name : "all topics"}{" "}
+                <span className="dim">
+                  ({activeGroup ? activeGroup.noteSlugs.length : notes.length})
+                </span>
+                <span className="dim"> {topicsOpen ? "▴" : "▾"}</span>
               </button>
-              {manifest.groups.map((g) => (
-                <button
-                  key={g.slug}
-                  className="topic-chip"
-                  aria-pressed={topic === g.slug}
-                  onClick={() => setTopic((t) => (t === g.slug ? null : g.slug))}
-                  style={{ "--chip": g.color } as CSSProperties}
-                >
-                  <span className="topic-dot" aria-hidden="true">
-                    ●
-                  </span>
-                  {g.name} <span className="dim">({g.noteSlugs.length})</span>
-                </button>
-              ))}
+
+              {topicsOpen && (
+                <div className="tag-dialog box" role="dialog" aria-label="filter by topic">
+                  <div className="tag-dialog-bar">
+                    <span className="accent-cyan">filter by topic</span>
+                    <span className="tag-dialog-hint" />
+                    <button
+                      className="tag-dialog-act"
+                      aria-label="close"
+                      onClick={() => setTopicsOpen(false)}
+                    >
+                      [x]
+                    </button>
+                  </div>
+                  <div className="tag-dialog-list">
+                    <button
+                      className="topic-chip"
+                      aria-pressed={topic === null}
+                      onClick={() => pickTopic(null)}
+                    >
+                      all <span className="dim">({notes.length})</span>
+                    </button>
+                    {manifest.groups.map((g) => (
+                      <button
+                        key={g.slug}
+                        className="topic-chip"
+                        aria-pressed={topic === g.slug}
+                        onClick={() => pickTopic(g.slug)}
+                        style={{ "--chip": g.color } as CSSProperties}
+                      >
+                        <span className="topic-dot" aria-hidden="true">
+                          ●
+                        </span>
+                        {g.name} <span className="dim">({g.noteSlugs.length})</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <ul className="mono-list note-list">
               {shownNotes.map((n) => (
                 <li key={n.slug} className="note-list-item">
                   <Link to={`/digital-garden/${n.slug}`} className="note-list-link">
+                    {/* the dot carries the note's folder colour */}
+                    <span
+                      className="note-list-dot"
+                      style={{ color: getGroup(n.groupSlug)?.color }}
+                      aria-hidden="true"
+                    >
+                      ●
+                    </span>
                     {n.star && (
                       <span className="star-badge" aria-label="featured">
                         ★{" "}
                       </span>
                     )}
                     <span className="note-list-title">{n.title}</span>
-                    <span className="dim"> — {n.group}/</span>
                   </Link>
                   {n.summary && <p className="dim note-list-summary">{n.summary}</p>}
                 </li>

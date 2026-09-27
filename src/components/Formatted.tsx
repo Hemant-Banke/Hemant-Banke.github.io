@@ -3,14 +3,17 @@ import { getNote } from "../content/manifest";
 
 // Tiny inline formatter for free-text fields in src/data/site.ts — not a full
 // markdown parser, just the handful of things a bio/intro string needs:
-// **bold**, *italic*, __underline__, [[wiki-links]], and literal "\n" newlines.
+// **bold**, *italic*, __underline__, [[wiki-links]], [label](href) links, and
+// literal "\n" newlines.
 // Output is plain React elements (no dangerouslySetInnerHTML).
 //
 // Wiki-links take the same shape as the garden's: [[slug]] renders the note's
 // title, [[slug|label]] renders your own text. A target that doesn't resolve
 // falls back to plain amber text rather than a dead link, matching how the
-// garden marks broken links.
-const TOKEN = /(\*\*.+?\*\*|\*.+?\*|__.+?__|\[\[[^\]\n]+\]\]|\n)/g;
+// garden marks broken links. [label](href) links (e.g. to a PDF in public/)
+// open in a new tab.
+const TOKEN = /(\*\*.+?\*\*|\*.+?\*|__.+?__|\[\[[^\]\n]+\]\]|\[[^\]\n]+\]\([^)\s]+\)|\n)/g;
+const HREF = /^\[([^\]\n]+)\]\(([^)\s]+)\)$/;
 
 function WikiLink({ raw }: { raw: string }) {
   const [target, alias] = raw.slice(2, -2).split("|");
@@ -41,6 +44,14 @@ export default function Formatted({ text }: { text: string }) {
           if (part === "\n") return <br key={i} />;
           if (part.startsWith("[[") && part.endsWith("]]")) {
             return <WikiLink key={i} raw={part} />;
+          }
+          const href = part.match(HREF);
+          if (href) {
+            return (
+              <a key={i} href={href[2]} target="_blank" rel="noreferrer noopener">
+                {href[1]}
+              </a>
+            );
           }
           if (part.startsWith("**") && part.endsWith("**")) {
             return <strong key={i}>{part.slice(2, -2)}</strong>;

@@ -75,3 +75,29 @@ export function useIsNarrow(px = 720): boolean {
   }, [px]);
   return narrow;
 }
+
+/**
+ * Close a popover on Esc or on a pointer-down outside `ref` (which should wrap
+ * both the trigger and the popover, so clicking the trigger still toggles).
+ */
+export function useDismiss(
+  open: boolean,
+  ref: React.RefObject<HTMLElement | null>,
+  close: () => void,
+): void {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    const onDown = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) close();
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onDown);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onDown);
+    };
+  }, [open, ref, close]);
+}

@@ -168,6 +168,22 @@ export async function buildManifest(gardenDir) {
     );
   };
 
+  // Mark the post's opening paragraph (the first top-level <p> whose text
+  // starts with a letter — not a link line, an italic note or a quote) as the
+  // lede, which gets the decorated drop cap.
+  const markLede = (html) => {
+    const re = /<p>(?=\p{L})/gu;
+    for (let m; (m = re.exec(html)); ) {
+      const before = html.slice(0, m.index);
+      const depth =
+        (before.match(/<blockquote/g) || []).length -
+        (before.match(/<\/blockquote>/g) || []).length;
+      if (depth === 0)
+        return html.slice(0, m.index) + '<p class="lede">' + html.slice(m.index + 3);
+    }
+    return html;
+  };
+
   // Pass 2: render notes.
   const notes = raw.map((n) => {
     const { out, links, broken } = transformWikiLinks(n.body, resolve);
@@ -184,7 +200,7 @@ export async function buildManifest(gardenDir) {
       status: n.status,
       star: n.star,
       artifacts: n.artifacts,
-      html: md.render(out),
+      html: markLede(md.render(out)),
       wordCount: wordCount(n.body),
       links,
       brokenLinks: broken,

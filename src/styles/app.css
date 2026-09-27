@@ -19,10 +19,13 @@
   height: 3.25rem;
 }
 .nav-brand {
-  color: var(--ink);
+  color: var(--ink-strong);
   border: none;
   white-space: nowrap;
-  font-weight: 500;
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 .nav-brand:hover {
   border: none;
@@ -184,7 +187,7 @@
 
 /* ---- page scaffolding --------------------------------------------------- */
 .page {
-  padding: clamp(2rem, 5vw, 4rem) 1rem 5rem;
+  padding: clamp(2rem, 5vw, 4rem) var(--gutter) 5rem;
   min-height: 60vh;
 }
 .section-head {
@@ -197,7 +200,7 @@
 }
 .section-head h1,
 .section-head h2 {
-  font-size: clamp(1.3rem, 3vw, 1.9rem);
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
   margin: 0;
 }
 .section-head .hash {
@@ -210,10 +213,12 @@
   color: var(--ink);
   max-width: var(--measure);
   margin: 0 0 2.5rem;
+  font-size: 1.15rem;
+  line-height: 1.55;
 }
 
 /* ---- listings: academic line items -------------------------------------- */
-/* Every listing (research, projects, curated, home) is one full-width column
+/* Every listing (research, projects, home) is one full-width column
    of reference-style entries, separated by rules rather than boxed in cards. */
 .item-list {
   display: flex;
@@ -221,6 +226,8 @@
   border-top: 1px solid var(--line-soft);
 }
 .item {
+  /* hanging indent = width of the mono "◆ " marker before the serif title */
+  --item-indent: 1.25rem;
   padding: 1.1rem 0.2rem;
   border-bottom: 1px solid var(--line-soft);
 }
@@ -232,16 +239,19 @@
 }
 .item-title {
   color: var(--ink-strong);
-  font-weight: 500;
-  font-size: 1.02rem;
-  line-height: 1.35;
+  font-weight: 600;
+  font-size: 1.28rem;
+  line-height: 1.3;
   border: none;
-  text-indent: -1.4ch;
-  padding-left: 1.4ch;
+  text-indent: calc(-1 * var(--item-indent));
+  padding-left: var(--item-indent);
 }
 .item-title::before {
   content: "◆ ";
   color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  font-weight: 400;
 }
 /* featured pages take an amber star in place of the diamond marker */
 .item-title-star::before {
@@ -254,15 +264,16 @@
 }
 .item-date {
   flex-shrink: 0;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
 /* Attribution line: authors / venue / folder / status, the way a citation
    carries its provenance under the title. */
 .item-byline {
   margin: 0.2rem 0 0;
-  padding-left: 1.4ch;
-  font-size: 0.84rem;
+  padding-left: var(--item-indent);
+  font-size: 0.75rem;
+  font-style: italic;
   line-height: 1.4;
 }
 .item-status {
@@ -270,52 +281,61 @@
 }
 .item-summary {
   margin: 0.45rem 0 0;
-  padding-left: 1.4ch;
+  padding-left: var(--item-indent);
   color: var(--ink);
-  max-width: var(--measure);
-  line-height: 1.5;
+  font-size: 1.08rem;
+  line-height: 1.55;
 }
-.item-foot {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 0.5rem 2ch;
+.item-links {
   margin-top: 0.55rem;
-  padding-left: 1.4ch;
+  padding-left: var(--item-indent);
 }
 .item-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5ch;
-}
-.item-links {
-  display: flex;
-  gap: 1.2ch;
-  flex-wrap: wrap;
-  margin-left: auto;
+  margin-top: 0.55rem;
+  padding-left: var(--item-indent);
 }
 
 @media (max-width: 700px) {
-  /* Links stack above the tags and hug the left edge, instead of being pushed
-     to the right of the row where they'd wrap onto a line of their own. */
-  .item-foot {
+  /* The date leaves the title row and drops below the byline: flatten the
+     head row into the item's column and reorder. */
+  .item {
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
   }
-  .item-links {
-    order: -1;
-    margin-left: 0;
+  .item-head {
+    display: contents;
+  }
+  .item-date {
+    order: 1;
+    margin-top: 0.2rem;
+    padding-left: var(--item-indent);
+  }
+  .item-links,
+  .item-summary,
+  .item-tags {
+    order: 2;
   }
 }
 
+/* Status labels: a small dot + lowercase word, no box, so they annotate
+   rather than shout. */
 .badge {
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0 0.6ch;
-  border: 1px solid currentColor;
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-style: normal;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  opacity: 0.85;
+}
+.badge::before {
+  content: "●";
+  font-size: 0.7em;
+  margin-right: 0.45rem;
+  vertical-align: 0.15em;
 }
 .badge.shipped {
   color: var(--green);
@@ -328,73 +348,112 @@
 }
 .note-byline {
   margin: 0 0 0.6rem;
-  font-size: 0.92rem;
+  font-size: 0.75rem;
+  font-style: italic;
 }
 
 /* ---- footer ------------------------------------------------------------- */
 .footer {
   position: relative;
-  overflow: hidden;
   border-top: 1px solid var(--line);
-  padding: 2.5rem 0 3rem;
   margin-top: 3rem;
 }
-/* Reaction-diffusion field behind the footer. It pauses itself whenever the
-   footer is off screen or the tab is backgrounded (whileVisible), so it costs
-   nothing until you actually reach the bottom of a page. */
-.ascii-field.footer-field {
-  opacity: 0.2;
-  mask-image: linear-gradient(to bottom, transparent 12%, #000 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 12%, #000 100%);
-}
-.footer-inner {
+/* Night garden (FooterGarden) filling the whole footer, down to the page's
+   bottom edge: dim at rest, a lens follows the pointer and reveals it in
+   colour. Quote + socials sit top-left, the credit bottom-centre. */
+.footer-garden {
   position: relative;
-  z-index: 1;
+  height: 360px;
+  overflow: hidden;
+  touch-action: pan-y;
+  cursor: crosshair;
 }
-.footer-grid {
+.footer-garden-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.footer-garden-top {
+  position: absolute;
+  top: 1.8rem;
+  left: max(var(--gutter), calc((100vw - 1180px) / 2 + var(--gutter)));
+  right: var(--gutter);
   display: flex;
-  justify-content: space-between;
-  gap: 1.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 1rem;
+  pointer-events: none; /* the lens keeps tracking over the text */
 }
-.footer-note {
+.footer-garden-quote {
   margin: 0;
-  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
+.footer-garden-line {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  line-height: 1.15;
+  color: var(--ink-strong);
+}
+.footer-garden-cite {
+  font-size: 0.75rem;
+}
+.socials-footer {
+  pointer-events: auto;
+  margin-left: -0.5rem; /* first glyph on the quote's edge, not its hit area */
+}
+.footer-credit {
+  position: absolute;
+  left: 50%;
+  bottom: 0.6rem;
+  translate: -50% 0;
+  margin: 0;
+  padding: 0.1rem 0.8ch;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--bg) 75%, transparent);
+  pointer-events: none;
+}
+@media (max-width: 640px) {
+  .footer-garden {
+    height: 320px;
+  }
+}
+
+/* Social links: icon-only row. */
 .socials {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 1.4ch;
+  align-items: center;
+  gap: 0.35rem;
 }
 .socials a {
-  border: none;
   display: inline-flex;
-  gap: 0.6ch;
-  align-items: baseline;
-  min-width: 0;
-}
-.socials-handle {
-  overflow-wrap: anywhere;
-}
-.socials a:hover {
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
   border: none;
-}
-.socials-label {
-  color: var(--cyan);
-}
-.socials-label::before {
-  content: "[";
   color: var(--dim);
+  transition: color 0.12s ease, transform 0.12s ease;
 }
-.socials-label::after {
-  content: "]";
-  color: var(--dim);
+.socials a:hover,
+.socials a:focus-visible {
+  border: none;
+  color: var(--green);
 }
-.socials-handle {
-  font-size: 0.82rem;
+.socials svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .socials a:hover {
+    transform: translateY(-1px);
+  }
 }
 
 /* ---- misc utility ------------------------------------------------------- */
@@ -445,94 +504,111 @@
   margin-top: 1.1rem;
 }
 .note-status {
-  margin-left: 0.9ch;
-  font-size: 0.62em;
-  vertical-align: middle;
-  translate: 0 -0.15em;
+  margin-left: 1ch;
 }
 
-/* ---- curated starred section ---- */
-.starred {
-  margin: 0 0 2.5rem;
-}
 /* ---- home: research / projects tabs ------------------------------------- */
 .home-work {
   padding-top: clamp(2.5rem, 6vw, 4.5rem);
 }
-.work-tabs .section-head {
-  margin-bottom: 0.9rem;
-}
-.work-tabs .section-head h2 {
-  font-size: clamp(1.1rem, 2.4vw, 1.5rem);
-}
-.work-tabs-all {
-  margin-left: auto;
-  align-self: center;
-}
-.work-tabs-all:hover {
-  color: var(--green);
-}
-/* Tabs as a terminal-style rail: the active one is marked with a caret and
-   sits on the content, the inactive ones recede. */
-.work-tabbar {
+.work-head {
   display: flex;
-  gap: 0.3rem;
-  border-bottom: 1px solid var(--line);
-  margin-bottom: 1.1rem;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  margin-bottom: 1.4rem;
 }
-.work-tab {
+.work-title {
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  margin: 0;
+}
+/* Segmented switch: one bordered rail, the active segment filled. */
+.work-switch {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  background: var(--bg-1);
+  padding: 3px;
+  gap: 3px;
+}
+.work-switch-btn {
   font: inherit;
-  font-size: 0.92rem;
-  white-space: pre;
-  padding: 0.4rem 1ch 0.5rem;
-  margin-bottom: -1px;
-  border: 1px solid transparent;
-  border-bottom-color: var(--line);
+  font-size: 0.85rem;
+  padding: 0.3rem 0.9rem;
+  border: none;
   background: none;
   color: var(--dim);
   cursor: pointer;
-  transition: color 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  white-space: nowrap;
+  transition: color 0.12s ease, background 0.12s ease;
 }
-.work-tab:hover {
+.work-switch-btn:hover {
   color: var(--ink-strong);
 }
-.work-tab[aria-selected="true"] {
+.work-switch-btn[aria-selected="true"] {
+  background: var(--bg-2);
   color: var(--green);
-  background: var(--bg-1);
-  border-color: var(--line);
-  border-bottom-color: transparent;
 }
-.work-tab:focus-visible {
+.work-switch-n {
+  margin-left: 0.8ch;
+  font-size: 0.75rem;
+  color: var(--dimmer);
+}
+.work-switch-btn[aria-selected="true"] .work-switch-n {
+  color: var(--dim);
+}
+.work-switch-btn:focus-visible {
   outline: 2px solid var(--green);
   outline-offset: -2px;
 }
 
-.home-starred {
-  padding-top: clamp(2.5rem, 6vw, 4.5rem);
+/* The panel is re-keyed per tab, so this plays on every switch: the new list
+   slides in from the side of the segment you picked. */
+@media (prefers-reduced-motion: no-preference) {
+  .work-panel {
+    animation: work-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .work-panel.from-left {
+    --from: -14px;
+  }
+  .work-panel.from-right {
+    --from: 14px;
+  }
 }
-.starred .section-head {
-  margin-bottom: 1rem;
+@keyframes work-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--from, 0));
+  }
 }
-.starred .section-head h2,
-.home-recent .section-head h2 {
-  font-size: clamp(1.1rem, 2.4vw, 1.5rem);
-}
-.starred-count {
-  margin-left: auto;
+.work-all {
+  display: inline-block;
+  margin-top: 1.2rem;
   font-size: 0.85rem;
+  color: var(--dim);
 }
-a.starred-count {
-  border: none;
-}
-a.starred-count:hover {
+.work-all:hover {
   color: var(--green);
-  border: none;
 }
 
+.home-recent .section-head {
+  align-items: flex-end;
+  flex-wrap: nowrap;
+  margin-bottom: 1.4rem;
+}
+.home-recent .section-head h2 {
+  min-width: 0;
+}
+@media (max-width: 700px) {
+  .hide-phone {
+    display: none;
+  }
+}
 /* ---- filter / sort browser ---- */
 .browser-controls {
+  position: relative; /* anchors the tag dialog on phones */
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 0.6rem 1.4rem;
   margin-bottom: 1.5rem;
@@ -553,6 +629,12 @@ a.starred-count:hover {
 }
 .browser-label::after {
   content: ":";
+}
+.browser-active {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: -0.6rem 0 1.5rem;
 }
 .browser-count {
   margin-left: auto;
@@ -578,12 +660,84 @@ a.starred-count:hover {
   background: var(--green);
   border-color: var(--green);
 }
-.chip-clear {
-  color: var(--amber);
+/* Tag filter: a button that opens the full tag list as a popover dialog, so
+   a long tag cloud doesn't push the listing down the page. */
+.tag-filter {
+  position: relative;
 }
-.chip-clear:hover {
-  border-color: var(--amber);
-  color: var(--amber);
+.tag-dialog {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 30;
+  width: min(30rem, calc(100vw - 2 * var(--gutter)));
+  padding: 0 0.8rem 0.8rem;
+  background: var(--bg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+/* Phones: one tight line (no "sort:" label, slimmer chips), and the dialog
+   spans the controls row instead of hanging off the button, so it can't run
+   off-screen. */
+@media (max-width: 700px) {
+  .browser-controls {
+    gap: 0.8rem;
+  }
+  .browser-controls .browser-group {
+    flex-wrap: nowrap;
+  }
+  .browser-controls .browser-label {
+    display: none;
+  }
+  .browser-controls .chip {
+    padding: 0.1rem 0.55ch;
+    white-space: nowrap;
+  }
+  .tag-filter {
+    position: static;
+  }
+  .tag-dialog {
+    left: 0;
+    right: 0;
+    width: auto;
+  }
+}
+.tag-dialog-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 1ch;
+  padding: 0.4rem 0;
+  margin-bottom: 0.7rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.82rem;
+}
+.tag-dialog-hint {
+  font-size: 0.75rem;
+  margin-right: auto;
+}
+.tag-dialog-act {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--dim);
+  font: inherit;
+  cursor: pointer;
+}
+.tag-dialog-act:hover,
+.tag-dialog-act:focus-visible {
+  color: var(--magenta);
+  outline: none;
+}
+.tag-dialog-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+.chip[aria-pressed="true"] .dim,
+.chip[aria-pressed="true"] .accent-green {
+  color: inherit;
+  opacity: 0.7;
 }
 
 @media (max-width: 900px) {

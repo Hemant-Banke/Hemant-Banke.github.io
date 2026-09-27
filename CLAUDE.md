@@ -12,7 +12,8 @@ static, deployed to GitHub Pages (root domain, `base: '/'`).
 ## Architecture
 - **Content pipeline** — `plugins/vite-plugin-content.ts` scans `digital-garden/`, parses
   frontmatter (`gray-matter`), renders Markdown (`markdown-it`), resolves
-  `[[wiki-links]]`, and emits `src/generated/manifest.json` (gitignored) with
+  `[[wiki-links]]`, marks each post's opening prose paragraph `p.lede` (it
+  gets the IM Fell drop cap in `garden.css`), and emits `src/generated/manifest.json` (gitignored) with
   `{ notes, groups, graph:{nodes,edges}, tree }`. Types in `src/content/types.ts`;
   typed access via `src/content/manifest.ts`.
   - The manifest is generated at dev-server start / build. If you run `tsc`
@@ -29,18 +30,27 @@ static, deployed to GitHub Pages (root domain, `base: '/'`).
   (species + attraction matrix) on `<canvas>`, additive-glow on dark /
   darker-palette normal-blend on light, swapping live on the `themechange`
   event. Plus figlet wordmark (`src/lib/ascii.ts`) + `Typed.tsx`.
-- **ASCII reaction-diffusion** — `src/components/AsciiField.tsx`: Gray-Scott
-  reaction-diffusion (moving-spots regime) on a character grid, drawn as
-  density-ramped glyphs. Emergent drifting/splitting cells. Used as the
-  letterbox backdrop behind the PDF reader (`PdfFullscreen.tsx`).
+- **Footer garden** — `src/components/FooterGarden.tsx`: a procedurally grown
+  (seeded) ASCII night garden on `<canvas>` — dithered meadow, flowers, moon,
+  plus absurd bits (an eye that watches the lens, a snail, a prompt growing in
+  the grass). Dim at rest; a soft lens follows the pointer and reveals a
+  pre-rendered vivid copy through a radial mask. Wanders on its own on touch;
+  static under reduced motion. Theme-reactive via `themechange`.
 - **Routing** — `BrowserRouter`; notes at `/digital-garden/*` (splat = note slug).
-- **Static content** — `src/data/*` (site, socials, projects, research, resume).
+- **Static content** — `src/data/*` (site, socials, projects, research).
+- **PDFs** — static files in `public/`, linked directly (open in a new tab in
+  the browser's own viewer). No in-app PDF viewer.
 - **Styles** — `src/styles/{theme,app,hero,garden}.css`. Palette = CSS variables at
   the top of `theme.css`.
 
 ## Conventions
-- Terminal aesthetic: monospace everywhere, box-drawing borders, green/cyan/
-  magenta accents (amber = broken/unresolved). Keep new UI in that language.
+- Terminal aesthetic: monospace UI chrome (JetBrains Mono), box-drawing borders,
+  green/cyan/magenta accents (amber = broken/unresolved). Keep new UI in that
+  language. Reading text (post bodies, titles, summaries, hero intro, `.lead`)
+  is set in Newsreader (`--font-serif`, `@fontsource-variable/newsreader`) —
+  add new prose selectors to the shared rule in `theme.css`.
+- Starred notes (`star: true`) just get a ★ wherever they're listed; there is
+  no curated page.
 - Respect `prefers-reduced-motion` (see `src/lib/hooks.ts`) for anything animated.
 - `useEffect` callbacks must return a cleanup function or nothing — never an
   expression value (that crashes React's StrictMode double-invoke).

@@ -5,10 +5,8 @@ import { site } from "../data/site";
 const links = [
   { to: "/", label: "home", end: true },
   { to: "/digital-garden", label: "garden" },
-  { to: "/curated", label: "curated" },
   { to: "/research", label: "research" },
   { to: "/projects", label: "projects" },
-  { to: "/resume", label: "resume" },
 ];
 
 export default function Nav() {
@@ -18,7 +16,7 @@ export default function Nav() {
     <header className="nav">
       <div className="layout nav-row">
         <NavLink to="/" className="nav-brand" end onClick={() => setOpen(false)}>
-          <span className="accent-green">{site.handle}</span>
+          {site.name.split(" ")[0]}<span className="accent-green">.</span>
         </NavLink>
 
         <button
@@ -49,6 +47,18 @@ export default function Nav() {
               )}
             </NavLink>
           ))}
+          <a
+            href={site.resumePdf}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="nav-item"
+            onClick={() => setOpen(false)}
+          >
+            <span className="nav-bullet" aria-hidden="true">
+              {" "}
+            </span>
+            resume
+          </a>
         </nav>
       </div>
     </header>
