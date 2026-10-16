@@ -2,6 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // Legacy links: /project_reports/* moved to /artifacts/project_reports/*.
+      // Pages serves 404.html (a copy of this file) for the old path, so
+      // redirect before the app boots.
+      (function () {
+        var p = location.pathname;
+        if (p === "/project_reports" || p.indexOf("/project_reports/") === 0) {
+          location.replace("/artifacts" + p + location.search + location.hash);
+        }
+      })();
+    </script>
     <!-- icons are generated from public/artifacts/profile.jpg -->
     <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
     <link rel="icon" type="image/png" href="/favicon.png" sizes="64x64" />
